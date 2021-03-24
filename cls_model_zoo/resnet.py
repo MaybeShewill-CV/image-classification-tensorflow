@@ -19,7 +19,7 @@ from local_utils.config_utils import parse_config_utils
 
 class ResNet(resnet_utils.ResnetBase):
     """
-    Dialated Resnet Backbone for semantic segmentation
+    resnet moedl
     """
     def __init__(self, phase, cfg):
         """

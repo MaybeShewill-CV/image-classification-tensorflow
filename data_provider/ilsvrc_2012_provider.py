@@ -6,7 +6,7 @@
 # @File    : ilsvrc_2012_provider.py
 # @IDE: PyCharm
 """
-lutao dataset reader
+ilsvrc dataset reader
 """
 import os.path as ops
 

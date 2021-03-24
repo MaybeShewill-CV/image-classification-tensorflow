@@ -3,7 +3,7 @@
 # @Time    : 2021/3/24 下午3:16
 # @Author  : MaybeShewill-CV
 # @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
-# @File    : __init__.py.py
+# @File    : __init__.py
 # @IDE: PyCharm
 """
 model trainner
