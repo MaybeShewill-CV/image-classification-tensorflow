@@ -15,7 +15,7 @@ import tensorflow as tf
 import numpy as np
 
 from cls_model_zoo import cnn_basenet
-from local_utils.config_utils import parse_config_utils
+from local_utils import config_utils
 
 
 class Xception(cnn_basenet.CNNBaseModel):
@@ -591,7 +591,7 @@ def test():
 
     :return:
     """
-    cfg = parse_config_utils.ld_lane_xception_cfg
+    cfg = cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_xception.yaml')
     test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 64, 256, 3], name='test_input')
     test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
     model = get_model(phase='train', cfg=cfg)
