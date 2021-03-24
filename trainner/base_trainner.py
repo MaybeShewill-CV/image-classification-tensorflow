@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2021/3/24 下午3:28
-# @Author  : LuoYao
-# @Site    : ICode
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @File    : base_trainner.py
 # @IDE: PyCharm
 """
 Trainner for image classification
 """
-from abc import ABCMeta
-from abc import abstractmethod
 import os
 import os.path as ops
 import shutil
@@ -27,7 +25,7 @@ import data_provider
 LOG = loguru.logger
 
 
-class BaseClsTrainner(metaclass=ABCMeta):
+class BaseClsTrainner(object):
     """
     init base trainner
     """
@@ -40,6 +38,8 @@ class BaseClsTrainner(metaclass=ABCMeta):
         self._cfg = cfg
         self._model_name = self._cfg.MODEL.MODEL_NAME
         self._dataset_name = self._cfg.DATASET.DATASET_NAME
+        LOG.info('Start initializing {:s} trainner for {:s}'.format(self._model_name, self._dataset_name))
+
         self._dataset_reader = data_provider.get_dataset_provider(cfg=cfg)
         self._train_dataset = self._dataset_reader.train_dataset
         self._val_dataset = self._dataset_reader.val_dataset
@@ -88,7 +88,7 @@ class BaseClsTrainner(metaclass=ABCMeta):
         self._model = cls_model_zoo.get_model(cfg=cfg)
         loss_set = self._model.compute_loss(
             input_tensor=self._input_src_image,
-            labels=self._input_label,
+            label=self._input_label,
             name=self._model_name,
             reuse=False
         )
@@ -212,7 +212,6 @@ class BaseClsTrainner(metaclass=ABCMeta):
 
         LOG.info('Initialize {:s} {:s} trainner complete'.format(self._dataset_name, self._model_name))
 
-    @abstractmethod
     def train(self):
         """
 
