@@ -24,12 +24,12 @@ AUG:
         SATURATION_JITTER_RATIO: 0.5
 DATASET:
     DATASET_NAME: 'ilsvrc_2012'
-    DATA_DIR: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012'
+    DATA_DIR: './data/ilsvrc_2012_dataset'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
     NUM_CLASSES: 1000
-    TEST_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/test.txt'
-    TRAIN_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/train.txt'
-    VAL_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/val.txt'
+    TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
+    TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
+    VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
     MEAN_VALUE: [104.00698793, 116.66876762, 122.67891434]
