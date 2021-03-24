@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 19-3-29 下午1:34
-# @Author  : LuoYao
-# @Site    : ICode
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @File    : resnet_utils.py
 # @IDE: PyCharm
 """

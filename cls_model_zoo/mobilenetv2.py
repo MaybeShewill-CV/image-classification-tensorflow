@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2020/6/22 下午3:54
-# @Author  : LuoYao
-# @Site    : ICode
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @File    : mobilenetv2.py
 # @IDE: PyCharm
 """
