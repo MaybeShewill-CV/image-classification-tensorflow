@@ -1,0 +1,13 @@
+./data/ilsvrc_2012_dataset/source_image/train/1/n01443537_50.JPEG 1
+./data/ilsvrc_2012_dataset/source_image/train/2/n01484850_95.JPEG 2
+./data/ilsvrc_2012_dataset/source_image/train/0/n01440764_37.JPEG 0
+./data/ilsvrc_2012_dataset/source_image/train/1/n01443537_71.JPEG 1
+./data/ilsvrc_2012_dataset/source_image/train/1/n01443537_16.JPEG 1
+./data/ilsvrc_2012_dataset/source_image/train/2/n01484850_76.JPEG 2
+./data/ilsvrc_2012_dataset/source_image/train/2/n01484850_17.JPEG 2
+./data/ilsvrc_2012_dataset/source_image/train/0/n01440764_18.JPEG 0
+./data/ilsvrc_2012_dataset/source_image/train/2/n01484850_114.JPEG 2
+./data/ilsvrc_2012_dataset/source_image/train/2/n01484850_86.JPEG 2
+./data/ilsvrc_2012_dataset/source_image/train/1/n01443537_2.JPEG 1
+./data/ilsvrc_2012_dataset/source_image/train/0/n01440764_36.JPEG 0
+./data/ilsvrc_2012_dataset/source_image/train/1/n01443537_84.JPEG 1

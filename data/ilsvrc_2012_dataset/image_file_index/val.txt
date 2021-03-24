@@ -1,0 +1,6 @@
+./data/ilsvrc_2012_dataset/source_image/val/1/ILSVRC2012_val_00000006.JPEG 1
+./data/ilsvrc_2012_dataset/source_image/val/0/ILSVRC2012_val_00000014.JPEG 0
+./data/ilsvrc_2012_dataset/source_image/val/2/ILSVRC2012_val_00000047.JPEG 2
+./data/ilsvrc_2012_dataset/source_image/val/1/ILSVRC2012_val_00000005.JPEG 1
+./data/ilsvrc_2012_dataset/source_image/val/2/ILSVRC2012_val_00000042.JPEG 2
+./data/ilsvrc_2012_dataset/source_image/val/0/ILSVRC2012_val_00000013.JPEG 0
