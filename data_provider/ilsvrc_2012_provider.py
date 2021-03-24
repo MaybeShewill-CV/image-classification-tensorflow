@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2019/12/12 下午3:09
-# @Author  : LuoYao
-# @Site    : ICode
-# @File    : lutao_reader.py
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
+# @File    : ilsvrc_2012_provider.py
 # @IDE: PyCharm
 """
 lutao dataset reader
@@ -12,11 +12,11 @@ import os.path as ops
 
 import tqdm
 
-from data_provider import base_dataset_reader
+from data_provider import base_dataset_provider
 from local_utils import config_utils
 
 
-class IlsvrcDatasetProvider(base_dataset_reader.DataSetProvider):
+class IlsvrcDatasetProvider(base_dataset_provider.DataSetProvider):
     """
     Ilsvrc dataset reader
     """

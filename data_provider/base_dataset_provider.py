@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2021/3/24 下午2:07
-# @Author  : LuoYao
-# @Site    : ICode
-# @File    : base_dataset_reader.py
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
+# @File    : base_dataset_provider.py
 # @IDE: PyCharm
 """
 base dataset reader
