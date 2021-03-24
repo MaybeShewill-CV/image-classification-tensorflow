@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2019/12/12 下午1:57
-# @Author  : LuoYao
-# @Site    : ICode
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @File    : augmentation_utils.py
 # @IDE: PyCharm
 """
@@ -14,18 +14,11 @@ import numpy as np
 
 def _resize(img, cfg, mode='train'):
     """
-    改变图像及标签图像尺寸
-    AUG.AUG_METHOD为unpadding，所有模式均直接resize到AUG.FIX_RESIZE_SIZE的尺寸
-    AUG.AUG_METHOD为stepscaling, 按比例resize，训练时比例范围AUG.MIN_SCALE_FACTOR到AUG.MAX_SCALE_FACTOR,
-    间隔为AUG.SCALE_STEP_SIZE，其他模式返回原图
-    AUG.AUG_METHOD为rangescaling，长边对齐，短边按比例变化，训练时长边对齐范围AUG.MIN_RESIZE_VALUE
-    到AUG.MAX_RESIZE_VALUE，其他模式长边对齐AUG.INF_RESIZE_VALUE
-    Args：
-        img(numpy.ndarray): 输入图像
-        grt(numpy.ndarray): 标签图像，默认为None
-        mode(string): 模式, 默认训练模式
-    Returns：
-        resize后的图像和标签图
+    resize image
+    :param img:
+    :param cfg:
+    :param mode:
+    :return:
     """
     mode = mode.lower()
     if cfg.AUG.RESIZE_METHOD == 'unpadding':
@@ -69,13 +62,11 @@ def _resize(img, cfg, mode='train'):
 
 def _get_random_scale(min_scale_factor, max_scale_factor, step_size):
     """
-    在一定范围内得到随机值，范围为min_scale_factor到max_scale_factor，间隔为step_size
-    Args：
-        min_scale_factor(float): 随机尺度下限，大于0
-        max_scale_factor(float): 随机尺度上限，不小于下限值
-        step_size(float): 尺度间隔，非负, 等于为0时直接返回min_scale_factor到max_scale_factor范围内任一值
-    Returns：
-        随机尺度值
+    get random scale
+    :param min_scale_factor:
+    :param max_scale_factor:
+    :param step_size:
+    :return:
     """
 
     if min_scale_factor < 0 or min_scale_factor > max_scale_factor:
@@ -97,15 +88,11 @@ def _get_random_scale(min_scale_factor, max_scale_factor, step_size):
 
 def _randomly_scale_image_and_label(image, scale=1.0):
     """
-    按比例resize图像和标签图, 如果scale为1，返回原图
-    Args：
-        image(numpy.ndarray): 输入图像
-        label(numpy.ndarray): 标签图，默认None
-        sclae(float): 图片resize的比例，非负，默认1.0
-    Returns：
-        resize后的图像和标签图
-    """
 
+    :param image:
+    :param scale:
+    :return:
+    """
     if scale == 1.0:
         return image
 
@@ -121,13 +108,11 @@ def _randomly_scale_image_and_label(image, scale=1.0):
 
 def _random_rotation(crop_img, rich_crop_max_rotation, mean_value):
     """
-    随机旋转图像和标签图
-    Args：
-        crop_img(numpy.ndarray): 输入图像
-        rich_crop_max_rotation(int)：旋转最大角度，0-90
-        mean_value(list)：均值, 对图片旋转产生的多余区域使用均值填充
-    Returns：
-        旋转后的图像和标签图
+
+    :param crop_img:
+    :param rich_crop_max_rotation:
+    :param mean_value:
+    :return:
     """
     if rich_crop_max_rotation > 0:
         (h, w) = crop_img.shape[:2]
@@ -158,13 +143,11 @@ def _random_rotation(crop_img, rich_crop_max_rotation, mean_value):
 
 def _rand_scale_aspect(crop_img, rich_crop_min_scale=0, rich_crop_aspect_ratio=0):
     """
-    从输入图像和标签图像中裁取随机宽高比的图像，并reszie回原始尺寸
-    Args:
-        crop_img(numpy.ndarray): 输入图像
-        rich_crop_min_scale(float)：裁取图像占原始图像的面积比，0-1，默认0返回原图
-        rich_crop_aspect_ratio(float): 裁取图像的宽高比范围，非负，默认0返回原图
-    Returns:
-        裁剪并resize回原始尺寸的图像和标签图像
+
+    :param crop_img:
+    :param rich_crop_min_scale:
+    :param rich_crop_aspect_ratio:
+    :return:
     """
     if rich_crop_min_scale == 0 or rich_crop_aspect_ratio == 0:
         return crop_img
@@ -198,12 +181,10 @@ def _rand_scale_aspect(crop_img, rich_crop_min_scale=0, rich_crop_aspect_ratio=0
 
 def _saturation_jitter(cv_img, jitter_range):
     """
-    调节图像饱和度
-    Args:
-        cv_img(numpy.ndarray): 输入图像
-        jitter_range(float): 调节程度，0-1
-    Returns:
-        饱和度调整后的图像
+
+    :param cv_img:
+    :param jitter_range:
+    :return:
     """
     assert isinstance(cv_img, np.ndarray)
     grey_mat = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
@@ -218,12 +199,10 @@ def _saturation_jitter(cv_img, jitter_range):
 
 def _brightness_jitter(cv_img, jitter_range):
     """
-    调节图像亮度
-    Args:
-        cv_img(numpy.ndarray): 输入图像
-        jitter_range(float): 调节程度，0-1
-    Returns:
-        亮度调整后的图像
+
+    :param cv_img:
+    :param jitter_range:
+    :return:
     """
     assert isinstance(cv_img, np.ndarray)
     cv_img = cv_img.astype(np.float32)
@@ -235,12 +214,10 @@ def _brightness_jitter(cv_img, jitter_range):
 
 def _contrast_jitter(cv_img, jitter_range):
     """
-    调节图像对比度
-    Args:
-        cv_img(numpy.ndarray): 输入图像
-        jitter_range(float): 调节程度，0-1
-    Returns:
-        对比度调整后的图像
+
+    :param cv_img:
+    :param jitter_range:
+    :return:
     """
     assert isinstance(cv_img, np.ndarray)
     grey_mat = cv2.cvtColor(cv_img, cv2.COLOR_BGR2GRAY)
@@ -254,14 +231,12 @@ def _contrast_jitter(cv_img, jitter_range):
 
 def _random_jitter(cv_img, saturation_range, brightness_range, contrast_range):
     """
-    图像亮度、饱和度、对比度调节，在调整范围内随机获得调节比例，并随机顺序叠加三种效果
-    Args:
-        cv_img(numpy.ndarray): 输入图像
-        saturation_range(float): 饱和对调节范围，0-1
-        brightness_range(float): 亮度调节范围，0-1
-        contrast_range(float): 对比度调节范围，0-1
-    Returns:
-        亮度、饱和度、对比度调整后图像
+
+    :param cv_img:
+    :param saturation_range:
+    :param brightness_range:
+    :param contrast_range:
+    :return:
     """
 
     saturation_ratio = np.random.uniform(-saturation_range, saturation_range)
@@ -283,15 +258,13 @@ def _random_jitter(cv_img, saturation_range, brightness_range, contrast_range):
 
 def _hsv_color_jitter(crop_img, brightness_jitter_ratio=0, saturation_jitter_ratio=0, contrast_jitter_ratio=0):
     """
-    图像亮度、饱和度、对比度调节
-    Args:
-        crop_img(numpy.ndarray): 输入图像
-        brightness_jitter_ratio(float): 亮度调节度最大值，1-0，默认0
-        saturation_jitter_ratio(float): 饱和度调节度最大值，1-0，默认0
-        contrast_jitter_ratio(float): 对比度调节度最大值，1-0，默认0
-    Returns：
-        亮度、饱和度、对比度调节后图像
-   """
+
+    :param crop_img:
+    :param brightness_jitter_ratio:
+    :param saturation_jitter_ratio:
+    :param contrast_jitter_ratio:
+    :return:
+    """
 
     if brightness_jitter_ratio > 0 or \
         saturation_jitter_ratio > 0 or \
@@ -305,14 +278,11 @@ def _hsv_color_jitter(crop_img, brightness_jitter_ratio=0, saturation_jitter_rat
 
 def _rand_crop(crop_img, cfg, mode='train'):
     """
-    随机裁剪图片和标签图, 若crop尺寸大于原始尺寸，分别使用均值和ignore值填充再进行crop，
-    crop尺寸与原始尺寸一致，返回原图，crop尺寸小于原始尺寸直接crop
-    Args:
-        crop_img(numpy.ndarray): 输入图像
-        cfg:
-        mode(string): 模式, 默认训练模式，验证或预测、可视化模式时crop尺寸需大于原始图片尺寸
-    Returns：
-        裁剪后的图片和标签图
+
+    :param crop_img:
+    :param cfg:
+    :param mode:
+    :return:
     """
     mode = mode.lower()
     img_height = crop_img.shape[0]

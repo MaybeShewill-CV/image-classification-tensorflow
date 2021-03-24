@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2019/11/14 下午9:04
-# @Author  : LuoYao
-# @Site    : ICode
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @File    : init_logger.py
 # @IDE: PyCharm
 """

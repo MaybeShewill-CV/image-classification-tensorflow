@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2019/12/13 上午11:17
-# @Author  : LuoYao
-# @Site    : ICode
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @File    : parse_config_utils.py
 # @IDE: PyCharm
 """
