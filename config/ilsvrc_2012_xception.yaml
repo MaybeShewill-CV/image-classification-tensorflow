@@ -23,18 +23,16 @@ AUG:
         CONTRAST_JITTER_RATIO: 0.5
         SATURATION_JITTER_RATIO: 0.5
 DATASET:
-    DATASET_NAME: 'LD_LANE'
+    DATASET_NAME: 'ilsvrc_2012'
     DATA_DIR: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
     NUM_CLASSES: 1000
-    TEST_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/validation_label_new.txt'
-    TRAIN_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/train_label_new.txt'
-    VAL_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/validation_label_new.txt'
+    TEST_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/test.txt'
+    TRAIN_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/train.txt'
+    VAL_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
     MEAN_VALUE: [104.00698793, 116.66876762, 122.67891434]
-    CLASS_NAMES: ['pass', 'not_pass']
-    CLASS_INDEX: [0, 1]
     USE_ONE_HOT_LABEL: False
 FREEZE:
     MODEL_FILENAME: 'model'
@@ -49,6 +47,7 @@ TEST:
 TRAIN:
     MODEL_SAVE_DIR: 'model/xception_ilsvrc_2012/'
     TBOARD_SAVE_DIR: 'tboard/xception_ilsvrc_2012/'
+    MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
         ENABLE: False
         SNAPSHOT_PATH: ''
@@ -68,6 +67,7 @@ SOLVER:
     MOMENTUM: 0.9
     WEIGHT_DECAY: 0.0001
     MOVING_AVE_DECAY: 0.9995
+    LOSS_TYPE: 'cross_entropy'
 GPU:
     GPU_MEMORY_FRACTION: 0.9
     TF_ALLOW_GROWTH: True

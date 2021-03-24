@@ -33,8 +33,6 @@ DATASET:
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
     MEAN_VALUE: [104.00698793, 116.66876762, 122.67891434]
-    CLASS_NAMES: ['pass', 'not_pass']
-    CLASS_INDEX: [0, 1]
     USE_ONE_HOT_LABEL: False
 FREEZE:
     MODEL_FILENAME: 'model'
@@ -48,6 +46,7 @@ TEST:
 TRAIN:
     MODEL_SAVE_DIR: 'model/resnet_ilsvrc_2012/'
     TBOARD_SAVE_DIR: 'tboard/resnet_ilsvrc_2012/'
+    MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
         ENABLE: False
         SNAPSHOT_PATH: ''
@@ -67,6 +66,7 @@ SOLVER:
     MOMENTUM: 0.9
     WEIGHT_DECAY: 0.0001
     MOVING_AVE_DECAY: 0.9995
+    LOSS_TYPE: 'cross_entropy'
 GPU:
     GPU_MEMORY_FRACTION: 0.9
     TF_ALLOW_GROWTH: True
