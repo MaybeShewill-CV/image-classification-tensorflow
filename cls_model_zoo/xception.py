@@ -3,7 +3,7 @@
 # @Time    : 2019/12/10 下午2:04
 # @Author  : MaybeShewill-CV
 # @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
-# @File    : xception.py.py
+# @File    : xception.py
 # @IDE: PyCharm
 """
 Implement xception model
