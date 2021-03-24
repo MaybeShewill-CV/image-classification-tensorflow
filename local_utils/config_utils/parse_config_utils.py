@@ -220,10 +220,3 @@ class Config(dict):
             else:
                 raise TypeError('Not supported type {}'.format(type(val)))
         return json.dump(origin_dict, f_obj)
-
-
-lutao_xception_cfg = Config(config_path='./config/lutao_xception.yaml')
-ilsvrc_xception_cfg = Config(config_path='./config/ilsvrc_2012_xception.yaml')
-ld_lane_xception_cfg = Config(config_path='./config/ld_lane_xception.yaml')
-ld_lane_resnet_cfg = Config(config_path='./config/ld_lane_resnet.yaml')
-ld_lane_mobilenetv2_cfg = Config(config_path='./config/ld_lane_mobilenetv2.yaml')
