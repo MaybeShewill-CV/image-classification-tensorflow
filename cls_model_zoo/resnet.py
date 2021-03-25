@@ -14,6 +14,7 @@ import tensorflow as tf
 import numpy as np
 
 from cls_model_zoo import resnet_utils
+from cls_model_zoo import loss
 from local_utils import config_utils
 
 
@@ -40,6 +41,11 @@ class ResNet(resnet_utils.ResnetBase):
             self._block_func = self._building_block_v2
         else:
             self._block_func = self._bottleneck_block_v2
+
+        self._loss_type = self._cfg.SOLVER.LOSS_TYPE
+        self._loss_func = getattr(loss, '{:s}_loss'.format(self._loss_type))
+        self._weights_decay = self._cfg.SOLVER.WEIGHT_DECAY
+        self._class_nums = self._cfg.DATASET.NUM_CLASSES
 
     def _init_phase(self):
         """
@@ -178,7 +184,7 @@ class ResNet(resnet_utils.ResnetBase):
 
             final_logits = self.fullyconnect(
                 inputdata=inputs,
-                out_dim=self._cfg.DATASET.NUM_CLASSES,
+                out_dim=self._class_nums,
                 use_bias=False, name='final_logits'
             )
 
@@ -193,32 +199,30 @@ class ResNet(resnet_utils.ResnetBase):
         :param reuse:
         :return:
         """
-        labels = tf.cast(label, tf.int64)
-
-        inference_logits = self.inference(
+        logits = self.inference(
             input_tensor=input_tensor,
             name=name,
             reuse=reuse
         )
 
-        cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            logits=inference_logits,
-            labels=labels,
-            name='cross_entropy_per_example'
-        )
-        cross_entropy_loss = tf.reduce_mean(cross_entropy, name='cross_entropy')
-
-        l2_loss = self._cfg.SOLVER.WEIGHT_DECAY * tf.add_n(
-            [tf.nn.l2_loss(tf.cast(vv, tf.float32)) for vv in tf.trainable_variables() if 'bn' not in vv.name])
-
-        total_loss = cross_entropy_loss + l2_loss
-        total_loss = tf.identity(total_loss, name='resnet_total_loss')
-
-        ret = {
-            'total_loss': total_loss,
-            'principal_loss': cross_entropy_loss,
-            'l2_loss': l2_loss
-        }
+        with tf.variable_scope('resnet_loss', reuse=reuse):
+            if self._loss_type == 'cross_entropy':
+                ret = self._loss_func(
+                    logits=logits,
+                    label_tensor=label,
+                    weight_decay=self._weights_decay,
+                    l2_vars=tf.trainable_variables(),
+                )
+            elif self._loss_type == 'dice_bce':
+                ret = self._loss_func(
+                    logits=logits,
+                    label_tensor=label,
+                    weight_decay=self._weights_decay,
+                    l2_vars=tf.trainable_variables(),
+                    class_nums=self._class_nums,
+                )
+            else:
+                raise NotImplementedError('Loss of type: {:s} has not been implemented'.format(self._loss_type))
 
         return ret
 
