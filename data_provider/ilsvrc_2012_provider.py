@@ -35,7 +35,7 @@ class IlsvrcDatasetProvider(base_dataset_provider.DataSetProvider):
         with open(self._train_image_index_file_path, 'r') as file:
             for line in file:
                 info = line.rstrip('\r').rstrip('\n').strip(' ').split()
-                train_src_image_path = ops.join(self._dataset_dir, 'ILSVRC2012_TRAIN', info[0])
+                train_src_image_path = info[0]
                 label_id = info[1]
                 assert ops.exists(train_src_image_path), '{:s} not exist'.format(train_src_image_path)
 
@@ -44,7 +44,7 @@ class IlsvrcDatasetProvider(base_dataset_provider.DataSetProvider):
         with open(self._val_image_index_file_path, 'r') as file:
             for line in file:
                 info = line.rstrip('\r').rstrip('\n').strip(' ').split()
-                val_src_image_path = ops.join(self._dataset_dir, 'ILSVRC2012_IMG_VAL', info[0])
+                val_src_image_path = info[0]
                 val_label_id = info[1]
                 assert ops.exists(val_src_image_path), '{:s} not exist'.format(val_src_image_path)
 
