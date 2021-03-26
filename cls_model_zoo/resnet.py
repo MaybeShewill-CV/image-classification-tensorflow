@@ -113,8 +113,13 @@ class ResNet(resnet_utils.ResnetBase):
             :param _inputs:
             :return:
             """
+            if self._resnet_size < 50:
+                _output_dims = output_dims
+            else:
+                _output_dims = output_dims * 4
+
             return self._conv2d_fixed_padding(
-                inputs=_inputs, output_dims=output_dims * 4, kernel_size=1,
+                inputs=_inputs, output_dims=_output_dims, kernel_size=1,
                 strides=stride, name='projection_shortcut')
 
         with tf.variable_scope(name):
@@ -166,6 +171,7 @@ class ResNet(resnet_utils.ResnetBase):
                     output_dims=output_dims,
                     name='residual_block_{:d}'.format(index + 1)
                 )
+                print(inputs)
 
             inputs = self.layerbn(
                 inputdata=inputs,
@@ -243,7 +249,7 @@ def _test():
     :return:
     """
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_resnet.yaml')
-    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 64, 256, 3], name='test_input')
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
     test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
     model = get_model(phase='train', cfg=cfg)
     test_result = model.compute_loss(
@@ -256,10 +262,24 @@ def _test():
     print(test_result)
     print(tmp_logits)
 
+    total_parameters = 0
+    for variable in tf.trainable_variables():
+        # shape is an array of tf.Dimension
+        shape = variable.get_shape()
+        print(shape)
+        print(len(shape))
+        variable_parameters = 1
+        for dim in shape:
+            print(dim)
+            variable_parameters *= dim.value
+        print(variable_parameters)
+        total_parameters += variable_parameters
+    print(total_parameters)
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
-        test_input = np.random.random((1, 64, 256, 3)).astype(np.float32)
+        test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
         t_start = time.time()
         loop_times = 1000
         for i in range(loop_times):

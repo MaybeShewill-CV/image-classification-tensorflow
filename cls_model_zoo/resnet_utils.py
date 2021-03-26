@@ -85,32 +85,6 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
 
         return result
 
-    def _dilated_conv2d_fixed_padding(self, inputs, kernel_size, output_dims, strides, dilation_rate, name):
-        """
-        convolution op with fixed pad if stride greater than 1
-        :param inputs: input tensor [batch, h, w, c]
-        :param kernel_size: kernel size
-        :param output_dims: output dims of conv op
-        :param strides: stride of conv op
-        :param name: layer name
-        :return:
-        """
-        with tf.variable_scope(name_or_scope=name):
-            if strides > 1:
-                inputs = self._fixed_padding(inputs, kernel_size, name='fix_padding')
-
-            result = self.dilation_conv(
-                input_tensor=inputs,
-                k_size=kernel_size,
-                out_dims=output_dims,
-                rate=dilation_rate,
-                padding=('SAME' if strides == 1 else 'VALID'),
-                use_bias=False,
-                name='dilated_conv'
-            )
-
-        return result
-
     def _bottleneck_block_v1(self, input_tensor, stride,
                              output_dims, projection_shortcut,
                              name):
@@ -156,74 +130,6 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
                 output_dims=output_dims,
                 strides=stride,
                 name='conv_pad_2'
-            )
-            inputs = self.layerbn(inputdata=inputs, is_training=self._is_training, name='bn_2')
-            inputs = self.relu(inputdata=inputs, name='relu_2')
-
-            # bottleneck part3
-            inputs = self._conv2d_fixed_padding(
-                inputs=inputs,
-                kernel_size=1,
-                output_dims=output_dims * 4,
-                strides=1,
-                name='conv_pad_3'
-            )
-            inputs = self.layerbn(
-                inputdata=inputs,
-                is_training=self._is_training,
-                name='bn_3'
-            )
-
-            inputs = tf.add(inputs, shortcut, name='residual_add')
-            inputs = self.relu(inputdata=inputs, name='residual_relu')
-
-        return inputs
-
-    def _bottleneck_block_v1_with_dilation(
-            self, input_tensor, stride, output_dims, projection_shortcut, name, dilation_rate=2):
-        """
-        A single bottleneck block for ResNet v2.
-        Batch normalization then ReLu then convolution as described by:
-        Identity Mappings in Deep Residual Networks
-        https://arxiv.org/pdf/1603.05027.pdf
-        by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Jul 2016.
-        :param input_tensor: input tensor [batch, h, w, c]
-        :param stride: the stride in the middle conv op
-        :param output_dims: the output dims the final output dims will be output_dims * 4
-        :param projection_shortcut: the project func and could be set to None if not needed
-        :param name: the layer name
-        :return:
-        """
-        with tf.variable_scope(name_or_scope=name):
-            shortcut = input_tensor
-
-            if projection_shortcut is not None:
-                shortcut = projection_shortcut(input_tensor)
-                shortcut = self.layerbn(
-                    inputdata=shortcut,
-                    is_training=self._is_training,
-                    name='project_bn'
-                )
-
-            # bottleneck part1
-            inputs = self._conv2d_fixed_padding(
-                inputs=input_tensor,
-                kernel_size=1,
-                output_dims=output_dims,
-                strides=1,
-                name='conv_pad_1'
-            )
-            inputs = self.layerbn(inputdata=inputs, is_training=self._is_training, name='bn_1')
-            inputs = self.relu(inputdata=inputs, name='relu_1')
-
-            # bottleneck part2 repalce origin conv with dilation convolution op
-            inputs = self._dilated_conv2d_fixed_padding(
-                inputs=inputs,
-                kernel_size=3,
-                output_dims=output_dims,
-                strides=stride,
-                dilation_rate=dilation_rate,
-                name='dilated_conv_pad_2'
             )
             inputs = self.layerbn(inputdata=inputs, is_training=self._is_training, name='bn_2')
             inputs = self.relu(inputdata=inputs, name='relu_2')
@@ -304,64 +210,7 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
 
         return inputs
 
-    def _bottleneck_block_v2_with_dilation(
-            self, input_tensor, stride, output_dims, projection_shortcut, name, dilation_rate=2):
-        """
-        A single bottleneck block for ResNet v2.
-        Batch normalization then ReLu then convolution as described by:
-        Identity Mappings in Deep Residual Networks
-        https://arxiv.org/pdf/1603.05027.pdf
-        by Kaiming He, Xiangyu Zhang, Shaoqing Ren, and Jian Sun, Jul 2016.
-        :param input_tensor: input tensor [batch, h, w, c]
-        :param stride: the stride in the middle conv op
-        :param output_dims: the output dims the final output dims will be output_dims * 4
-        :param projection_shortcut: the project func and could be set to None if not needed
-        :param name: the layer name
-        :return:
-        """
-        with tf.variable_scope(name_or_scope=name):
-            shortcut = input_tensor
-            inputs = self.layerbn(inputdata=shortcut, is_training=self._is_training, name='bn_1')
-            inputs = self.relu(inputdata=inputs, name='relu_1')
-
-            if projection_shortcut is not None:
-                shortcut = projection_shortcut(inputs)
-
-            # bottleneck part1
-            inputs = self._conv2d_fixed_padding(
-                inputs=inputs,
-                kernel_size=1,
-                output_dims=output_dims,
-                strides=1,
-                name='conv_pad_1'
-            )
-            # bottleneck part2 repalce origin conv with dilation convolution op
-            inputs = self.layerbn(inputdata=inputs, is_training=self._is_training, name='bn_2')
-            inputs = self.relu(inputdata=inputs, name='relu_2')
-            inputs = self._dilated_conv2d_fixed_padding(
-                inputs=inputs,
-                kernel_size=3,
-                output_dims=output_dims,
-                strides=stride,
-                dilation_rate=dilation_rate,
-                name='dilated_conv_pad_2'
-            )
-            # bottleneck part3
-            inputs = self.layerbn(inputdata=inputs, is_training=self._is_training, name='bn_3')
-            inputs = self.relu(inputdata=inputs, name='relu_3')
-            inputs = self._conv2d_fixed_padding(
-                inputs=inputs,
-                kernel_size=1,
-                output_dims=output_dims * 4,
-                strides=1,
-                name='conv_pad_3'
-            )
-
-            inputs = tf.add(inputs, shortcut, name='residual_add')
-
-        return inputs
-
-    def _building_block_v1(self, input_tensor, strides, output_dims, name, projection_shortcut=None):
+    def _building_block_v1(self, input_tensor, stride, output_dims, name, projection_shortcut=None):
         """A single block for ResNet v1, without a bottleneck.
         Convolution then batch normalization then ReLU as described by:
           Deep Residual Learning for Image Recognition
@@ -373,7 +222,7 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
           output_dims: The number of filters for the convolutions.
           projection_shortcut: The function to use for projection shortcuts
             (typically a 1x1 convolution when downsampling the input).
-          strides: The block's stride. If greater than 1, this block will ultimately
+          stride: The block's stride. If greater than 1, this block will ultimately
             downsample the input.
           name: the layer op name
         Returns:
@@ -391,16 +240,24 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
                 )
 
             inputs = self._conv2d_fixed_padding(
-                inputs=input_tensor, output_dims=output_dims, kernel_size=3, strides=strides,
-                name='conv_pad_1')
+                inputs=input_tensor,
+                output_dims=output_dims,
+                kernel_size=3,
+                strides=stride,
+                name='conv_pad_1'
+            )
             inputs = self.layerbn(inputdata=inputs, is_training=self._is_training, name='bn_1')
             inputs = self.relu(inputs, name='relu_1')
 
             inputs = self._conv2d_fixed_padding(
-                inputs=inputs, output_dims=output_dims, kernel_size=3, strides=1,
-                name='conv_pad_2')
+                inputs=inputs,
+                output_dims=output_dims,
+                kernel_size=3,
+                strides=1,
+                name='conv_pad_2'
+            )
             inputs = self.layerbn(inputdata=inputs, is_training=self._is_training, name='bn_2')
-            inputs += shortcut
+            inputs = tf.add(inputs, shortcut, name='residual_add')
             inputs = self.relu(inputs, name='relu_2')
 
         return inputs
@@ -437,7 +294,7 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
             # building block part 1
             inputs = self._conv2d_fixed_padding(
                 inputs=inputs,
-                output_dims=output_dims * 4,
+                output_dims=output_dims,
                 kernel_size=3,
                 strides=stride,
                 name='conv_pad_1'
@@ -447,7 +304,7 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
             inputs = self.relu(inputdata=inputs, name='relu_2')
             inputs = self._conv2d_fixed_padding(
                 inputs=inputs,
-                output_dims=output_dims * 4,
+                output_dims=output_dims,
                 kernel_size=3,
                 strides=1,
                 name='conv_pad_2'
@@ -456,123 +313,6 @@ class ResnetBase(cnn_basenet.CNNBaseModel):
             inputs = tf.add(inputs, shortcut, name='residual_add')
 
         return inputs
-
-    def _aspp_module(self, input_tensor, output_stride,
-                     name, depth=256):
-        """
-        Implement the atrous spatial pyramid pooling
-        module more details can be found in
-        "Rethinking Atrous Convolution for Semantic Image Segmentation"
-        :param input_tensor: input tensor [batch_size, h, w, c]
-        :param output_stride: output stride
-        :param name:
-        :param depth: output feature dims
-        :return:
-        """
-        def _conv_bn_relu(_input_tensor, _k_size,
-                          _output_dims, _stride,
-                          _padding, _is_training, _name):
-            """
-            conv-bn-relu stage
-            :param _input_tensor: [batch_size, h, w, c]
-            :param _k_size: kernel size
-            :param _output_dims: the output feature dimensions
-            :param _stride: conv stride
-            :param _padding: conv padding
-            :param _is_training: whether is training
-            :param _name: conv stage name
-            :return:
-            """
-            with tf.variable_scope(name_or_scope=_name):
-                _conv = self.conv2d(inputdata=_input_tensor, out_channel=_output_dims,
-                                    kernel_size=_k_size, padding=_padding, stride=_stride,
-                                    use_bias=False, name='conv')
-                _bn = self.layerbn(inputdata=_conv, is_training=_is_training, name='bn')
-                _relu = self.relu(inputdata=_bn, name='relu')
-                return _relu
-
-        def _atrous_conv_bn_relu(_input_tensor, _k_size, _output_dims,
-                                 _rate, _padding, _is_training, _name):
-            """
-            atrous_conv-bn-relu stage
-            :param _input_tensor: [batch_size, h, w, c]
-            :param _k_size: conv kernel_size
-            :param _output_dims: output feature dimensions
-            :param _rate: dilation rate
-            :param _padding: conv padding
-            :param _is_training: whether is training
-            :param _name: conv stage name
-            :return:
-            """
-            with tf.variable_scope(name_or_scope=_name):
-                _atrous_conv = self.dilation_conv(
-                    input_tensor=_input_tensor, k_size=_k_size,
-                    out_dims=_output_dims, rate=_rate, padding=_padding,
-                    use_bias=False, name='atrous_conv'
-                )
-                _bn = self.layerbn(inputdata=_atrous_conv, is_training=_is_training, name='bn')
-                _relu = self.relu(inputdata=_bn, name='relu')
-                return _relu
-
-        with tf.variable_scope(name_or_scope=name):
-            if output_stride not in [8, 16]:
-                raise RuntimeError('Only support output of 8 or 16 for aspp module so far')
-
-            if output_stride == 16:
-                rates = [6, 12, 18]
-            else:
-                rates = [12, 24, 36]
-
-            [_, image_h, image_w, _] = input_tensor.get_shape().as_list()
-
-            # apply part a according to the origin paper
-            conv_1x1 = _conv_bn_relu(
-                _input_tensor=input_tensor, _k_size=1, _output_dims=depth,
-                _stride=1, _padding='SAME', _is_training=self._is_training, _name='conv_1x1'
-            )
-            atrous_conv_6 = _atrous_conv_bn_relu(
-                _input_tensor=input_tensor, _k_size=3, _output_dims=depth,
-                _rate=rates[0], _padding='SAME', _is_training=self._is_training, _name='atrous_conv_3x3_6'
-            )
-            atrous_conv_12 = _atrous_conv_bn_relu(
-                _input_tensor=input_tensor, _k_size=3, _output_dims=depth,
-                _rate=rates[1], _padding='SAME', _is_training=self._is_training, _name='atrous_conv_3x3_12'
-            )
-            atrous_conv_18 = _atrous_conv_bn_relu(
-                _input_tensor=input_tensor, _k_size=3, _output_dims=depth,
-                _rate=rates[2], _padding='SAME', _is_training=self._is_training, _name='atrous_conv_3x3_18'
-            )
-            # apply part 2 to extract image level features
-            image_level_feats = self.globalavgpooling(
-                inputdata=input_tensor, name='global_avg_pooling',
-                keepdims=True
-            )
-            image_level_feats = _conv_bn_relu(
-                _input_tensor=image_level_feats, _k_size=1, _output_dims=depth,
-                _stride=1, _padding='SAME', _is_training=self._is_training, _name='conv_1x1_image_level_feats'
-            )
-            image_level_feats = tf.image.resize_bilinear(
-                image_level_feats, [image_h, image_w],
-                name='upsampled_image_level_feats'
-            )
-            # fuse all feats
-            concat_feats = tf.concat(
-                [conv_1x1, atrous_conv_6, atrous_conv_12,
-                 atrous_conv_18, image_level_feats],
-                axis=3,
-                name='aspp_concat_feats'
-            )
-            fused_feats = _conv_bn_relu(
-                _input_tensor=concat_feats,
-                _k_size=1,
-                _output_dims=depth,
-                _stride=1,
-                _padding='SAME',
-                _is_training=self._is_training,
-                _name='aspp_fused_feats'
-            )
-
-            return fused_feats
 
     def inference(self, input_tensor, name, reuse=False):
         """

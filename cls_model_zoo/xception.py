@@ -490,7 +490,7 @@ def test():
     :return:
     """
     cfg = cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_xception.yaml')
-    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 64, 256, 3], name='test_input')
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
     test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
     model = get_model(phase='train', cfg=cfg)
     test_result = model.compute_loss(
@@ -506,7 +506,7 @@ def test():
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
-        test_input = np.random.random((1, 64, 256, 3)).astype(np.float32)
+        test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
         t_start = time.time()
         loop_times = 1000
         for i in range(loop_times):
