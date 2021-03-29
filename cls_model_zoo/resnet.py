@@ -171,7 +171,6 @@ class ResNet(resnet_utils.ResnetBase):
                     output_dims=output_dims,
                     name='residual_block_{:d}'.format(index + 1)
                 )
-                print(inputs)
 
             inputs = self.layerbn(
                 inputdata=inputs,
