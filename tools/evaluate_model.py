@@ -260,7 +260,7 @@ def evaluate():
         plot_precision_recall_curve(
             labels=enc.fit_transform(np.array(gt_labels).reshape((-1, 1))).toarray(),
             predictions_prob=predicted_score,
-            class_nums=2
+            class_nums=cfg.DATASET.NUM_CLASSES
         )
         plt.show()
 
