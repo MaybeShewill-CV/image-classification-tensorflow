@@ -85,7 +85,7 @@ class BaseClsTrainner(object):
             )
 
         # define model loss
-        self._model = cls_model_zoo.get_model(cfg=cfg)
+        self._model = cls_model_zoo.get_model(cfg=cfg, phase='train')
         loss_set = self._model.compute_loss(
             input_tensor=self._input_src_image,
             label=self._input_label,

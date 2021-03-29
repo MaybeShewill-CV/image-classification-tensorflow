@@ -12,7 +12,7 @@ import os.path as ops
 import importlib
 
 
-def get_model(cfg):
+def get_model(cfg, phase):
     """
     Fetch Network Function Pointer
     """
@@ -22,4 +22,4 @@ def get_model(cfg):
     module_name = '{:s}.{:s}'.format(module_dir_name, model_name)
     mod = importlib.import_module(module_name)
 
-    return getattr(mod, "get_model")(cfg=cfg, phase='train')
+    return getattr(mod, "get_model")(cfg=cfg, phase=phase)
