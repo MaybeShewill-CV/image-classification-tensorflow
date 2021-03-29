@@ -68,7 +68,7 @@ def _test():
 
     :return:
     """
-    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_xception.yaml')
+    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_resnet.yaml')
     reader = IlsvrcDatasetTfProvider(cfg=cfg)
     if not reader.successfully_initialized:
         print('Dataset reader not successfully initialized')
