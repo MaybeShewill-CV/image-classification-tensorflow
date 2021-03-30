@@ -51,7 +51,7 @@ class BaseClsTrainner(object):
         self._momentum = self._cfg.SOLVER.MOMENTUM
         self._model_save_dir = self._cfg.TRAIN.MODEL_SAVE_DIR
         self._snapshot_epoch = self._cfg.TRAIN.SNAPSHOT_EPOCH
-        self._input_tensor_size = self._cfg.AUG.FIX_RESIZE_SIZE
+        self._input_tensor_size = self._cfg.AUG.TRAIN_CROP_SIZE
         self._lr_polynimal_decay_power = self._cfg.SOLVER.LR_POLYNOMIAL_POWER
         self._optimizer_mode = self._cfg.SOLVER.OPTIMIZER.lower()
         self._tboard_save_dir = self._cfg.TRAIN.TBOARD_SAVE_DIR
@@ -63,6 +63,7 @@ class BaseClsTrainner(object):
             self._warmup_epoches = self._cfg.TRAIN.WARM_UP.EPOCH_NUMS
         else:
             self._warmup_epoches = 0
+        self._enable_fast_data_provider = self._cfg.TRAIN.FAST_DATA_PROVIDER.ENABLE
 
         # define tensorflow session
         sess_config = tf.ConfigProto(allow_soft_placement=True)
@@ -73,16 +74,21 @@ class BaseClsTrainner(object):
 
         # define graph input tensor
         with tf.variable_scope(name_or_scope='graph_input_node'):
-            self._input_src_image = tf.placeholder(
-                dtype=tf.float32,
-                shape=[self._batch_size, self._input_tensor_size[1], self._input_tensor_size[0], 3],
-                name='inpue_source_image'
-            )
-            self._input_label = tf.placeholder(
-                dtype=tf.int64,
-                shape=[self._batch_size],
-                name='input_label_image'
-            )
+            if self._enable_fast_data_provider:
+                dataset = self._train_dataset.next_batch()
+                self._input_src_image = dataset['aug_images']
+                self._input_label = dataset['labels']
+            else:
+                self._input_src_image = tf.placeholder(
+                    dtype=tf.float32,
+                    shape=[self._batch_size, self._input_tensor_size[1], self._input_tensor_size[0], 3],
+                    name='inpue_source_image'
+                )
+                self._input_label = tf.placeholder(
+                    dtype=tf.int32,
+                    shape=[self._batch_size],
+                    name='input_label_image'
+                )
 
         # define model loss
         self._model = cls_model_zoo.get_model(cfg=cfg, phase='train')
@@ -123,8 +129,9 @@ class BaseClsTrainner(object):
 
         # define learning rate
         with tf.variable_scope('learning_rate'):
-            self._global_step = tf.Variable(1.0, dtype=tf.float32, trainable=False, name='global_step')
-            self._val_global_step = tf.Variable(1.0, dtype=tf.float32, trainable=False, name='val_global_step')
+            self._global_step = tf.Variable(tf.constant(1.0), dtype=tf.float32, trainable=False, name='global_step')
+            self._val_global_step = tf.Variable(
+                tf.constant(1.0), dtype=tf.float32, trainable=False, name='val_global_step')
             warmup_steps = tf.constant(
                 self._warmup_epoches * self._steps_per_epoch, dtype=tf.float32, name='warmup_steps'
             )
@@ -241,53 +248,79 @@ class BaseClsTrainner(object):
             epoch_start_pt = 1
 
         for epoch in range(epoch_start_pt, self._train_epoch_nums):
-            traindataset_pbar = tqdm.tqdm(self._train_dataset)
-            valdataset_pbar = tqdm.tqdm(self._val_dataset)
             train_epoch_losses = []
             train_epoch_acc = []
-            # train_epoch_cls_acc = []
             val_epoch_losses = []
             val_epoch_acc = []
 
-            for samples in traindataset_pbar:
-                source_imgs = samples[0]
-                labels = samples[1]
-                if source_imgs is None or labels is None:
-                    continue
+            if not self._enable_fast_data_provider:
+                traindataset_pbar = tqdm.tqdm(self._train_dataset)
+                valdataset_pbar = tqdm.tqdm(self._val_dataset)
 
-                _, summary, train_step_loss, acc_value, global_step_value = self._sess.run(
-                    fetches=[self._train_op, self._write_summary_op,
-                             self._loss, self._prediction_acc, self._global_step],
-                    feed_dict={
-                        self._input_src_image: source_imgs,
-                        self._input_label: labels,
-                    }
-                )
-                train_epoch_losses.append(train_step_loss)
-                train_epoch_acc.append(acc_value)
-                # train_epoch_cls_acc.append(cls_acc_value)
-                self._summary_writer.add_summary(summary, global_step=global_step_value)
-                traindataset_pbar.set_description(
+                for samples in traindataset_pbar:
+                    source_imgs = samples[0]
+                    labels = samples[1]
+                    if source_imgs is None or labels is None:
+                        continue
+
+                    _, summary, train_step_loss, acc_value, global_step_value = self._sess.run(
+                        fetches=[self._train_op, self._write_summary_op,
+                                 self._loss, self._prediction_acc, self._global_step],
+                        feed_dict={
+                            self._input_src_image: source_imgs,
+                            self._input_label: labels,
+                        }
+                    )
+                    train_epoch_losses.append(train_step_loss)
+                    train_epoch_acc.append(acc_value)
+                    # train_epoch_cls_acc.append(cls_acc_value)
+                    self._summary_writer.add_summary(summary, global_step=global_step_value)
+                    traindataset_pbar.set_description(
+                            'train loss: {:.5f}, train acc: {:.5f}'.format(train_step_loss, acc_value)
+                    )
+
+                for samples in valdataset_pbar:
+                    source_imgs = samples[0]
+                    labels = samples[1]
+                    if source_imgs is None or labels is None:
+                        continue
+
+                    val_summary, val_step_loss, val_acc, val_global_step_value = self._sess.run(
+                        [self._validation_summary_op, self._loss, self._val_prediction_acc, self._val_global_step],
+                        feed_dict={
+                            self._input_src_image: source_imgs,
+                            self._input_label: labels,
+                        }
+                    )
+                    val_epoch_losses.append(val_step_loss)
+                    val_epoch_acc.append(val_acc)
+                    self._summary_writer.add_summary(val_summary, global_step=val_global_step_value)
+                    valdataset_pbar.set_description('test acc: {:.5f}'.format(val_acc))
+            else:
+                traindataset_pbar = tqdm.tqdm(range(1, self._steps_per_epoch))
+                valdataset_pbar = tqdm.tqdm(range(1, len(self._val_dataset)))
+
+                for _ in traindataset_pbar:
+                    _, summary, train_step_loss, acc_value, global_step_value = self._sess.run(
+                        fetches=[self._train_op, self._write_summary_op,
+                                 self._loss, self._prediction_acc, self._global_step]
+                    )
+                    train_epoch_losses.append(train_step_loss)
+                    train_epoch_acc.append(acc_value)
+                    # train_epoch_cls_acc.append(cls_acc_value)
+                    self._summary_writer.add_summary(summary, global_step=global_step_value)
+                    traindataset_pbar.set_description(
                         'train loss: {:.5f}, train acc: {:.5f}'.format(train_step_loss, acc_value)
-                )
+                    )
 
-            for samples in valdataset_pbar:
-                source_imgs = samples[0]
-                labels = samples[1]
-                if source_imgs is None or labels is None:
-                    continue
-
-                val_summary, val_step_loss, val_acc, val_global_step_value = self._sess.run(
-                    [self._validation_summary_op, self._loss, self._val_prediction_acc, self._val_global_step],
-                    feed_dict={
-                        self._input_src_image: source_imgs,
-                        self._input_label: labels,
-                    }
-                )
-                val_epoch_losses.append(val_step_loss)
-                val_epoch_acc.append(val_acc)
-                self._summary_writer.add_summary(val_summary, global_step=val_global_step_value)
-                valdataset_pbar.set_description('test acc: {:.5f}'.format(val_acc))
+                for _ in valdataset_pbar:
+                    val_summary, val_step_loss, val_acc, val_global_step_value = self._sess.run(
+                        [self._validation_summary_op, self._loss, self._val_prediction_acc, self._val_global_step],
+                    )
+                    val_epoch_losses.append(val_step_loss)
+                    val_epoch_acc.append(val_acc)
+                    self._summary_writer.add_summary(val_summary, global_step=val_global_step_value)
+                    valdataset_pbar.set_description('test acc: {:.5f}'.format(val_acc))
 
             train_epoch_losses = np.mean(train_epoch_losses)
             val_epoch_losses = np.mean(val_epoch_losses)
