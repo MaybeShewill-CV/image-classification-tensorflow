@@ -28,13 +28,6 @@ import matplotlib.pyplot as plt
 import cls_model_zoo
 from local_utils import config_utils
 
-loguru.logger.add(
-    './log/ld_lane_cls_evaluate.log',
-    level='INFO',
-    format="{time} {level} {message}",
-    retention="10 days",
-    rotation="1 week"
-)
 LOG = loguru.logger
 
 
@@ -152,6 +145,14 @@ def evaluate():
     dataset_flag = args.dataset_flag
     batch_size = args.batch_size
     need_shuffle = args.need_shuffle
+
+    loguru.logger.add(
+        './log/{:s}_{:s}_evaluate.log'.format(dataset_name, net_name),
+        level='INFO',
+        format="{time} {level} {message}",
+        retention="10 days",
+        rotation="1 week"
+    )
 
     if dataset_flag == 'val':
         image_file_list = cfg.DATASET.VAL_FILE_LIST
