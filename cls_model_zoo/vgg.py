@@ -119,7 +119,7 @@ class Vgg(cnn_basenet.CNNBaseModel):
                     need_layer_norm=True,
                     name='conv_stage_{:d}'.format(i + 1)
                 )
-            output = self.maxpooling(inputdata=output, kernel_size=2, stride=2, name='maxpooling')
+            output = self.maxpooling(inputdata=output, kernel_size=3, stride=2, name='maxpooling')
 
         return output
 
