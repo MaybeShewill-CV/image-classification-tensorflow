@@ -484,12 +484,25 @@ def get_model(phase, cfg):
     return Xception(phase=phase, cfg=cfg)
 
 
-def test():
+def _stats_graph(graph):
+    """
+
+    :param graph:
+    :return:
+    """
+    flops = tf.profiler.profile(graph, options=tf.profiler.ProfileOptionBuilder.float_operation())
+    params = tf.profiler.profile(graph, options=tf.profiler.ProfileOptionBuilder.trainable_variables_parameter())
+    print('FLOPs: {};    Trainable params: {}'.format(flops.total_float_ops, params.total_parameters))
+
+    return
+
+
+def _test():
     """
 
     :return:
     """
-    cfg = cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_xception.yaml')
+    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_xception.yaml')
     test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
     test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
     model = get_model(phase='train', cfg=cfg)
@@ -505,6 +518,8 @@ def test():
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+
+        _stats_graph(sess.graph)
 
         test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
         t_start = time.time()
@@ -522,4 +537,4 @@ if __name__ == '__main__':
     """
     test code
     """
-    test()
+    _test()

@@ -242,6 +242,19 @@ def get_model(phase, cfg):
     return ResNet(phase=phase, cfg=cfg)
 
 
+def _stats_graph(graph):
+    """
+
+    :param graph:
+    :return:
+    """
+    flops = tf.profiler.profile(graph, options=tf.profiler.ProfileOptionBuilder.float_operation())
+    params = tf.profiler.profile(graph, options=tf.profiler.ProfileOptionBuilder.trainable_variables_parameter())
+    print('FLOPs: {};    Trainable params: {}'.format(flops.total_float_ops, params.total_parameters))
+
+    return
+
+
 def _test():
     """
 
@@ -261,22 +274,10 @@ def _test():
     print(test_result)
     print(tmp_logits)
 
-    total_parameters = 0
-    for variable in tf.trainable_variables():
-        # shape is an array of tf.Dimension
-        shape = variable.get_shape()
-        print(shape)
-        print(len(shape))
-        variable_parameters = 1
-        for dim in shape:
-            print(dim)
-            variable_parameters *= dim.value
-        print(variable_parameters)
-        total_parameters += variable_parameters
-    print(total_parameters)
-
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+
+        _stats_graph(sess.graph)
 
         test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
         t_start = time.time()
