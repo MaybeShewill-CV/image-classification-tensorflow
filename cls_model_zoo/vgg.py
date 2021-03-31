@@ -58,13 +58,13 @@ class Vgg(cnn_basenet.CNNBaseModel):
 
         :return:
         """
-        resnet_name = 'vgg-{:d}'.format(self._vgg_net_size)
+        vggnet_name = 'vgg-{:d}'.format(self._vgg_net_size)
         block_sizes = {
             'vgg-16': [2, 2, 3, 3, 3],
             'vgg-19': [3, 4, 4, 4, 4],
         }
         try:
-            return block_sizes[resnet_name]
+            return block_sizes[vggnet_name]
         except KeyError:
             raise RuntimeError('Wrong vgg name, only '
                                '[vgg-16, vgg-19] supported')
