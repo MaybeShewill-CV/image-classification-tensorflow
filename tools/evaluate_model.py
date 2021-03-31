@@ -155,9 +155,10 @@ def evaluate():
     )
 
     LOG.info('Eval model name: {:s}'.format(net_name))
-    LOG.info('Eval dataset name: {:s}'.format(dataset_name))
     LOG.info('Eval model config path: {:s}'.format(config_file_path))
     LOG.info('Eval model weights path: {:s}'.format(args.weights_path))
+    LOG.info('Eval dataset name: {:s}'.format(dataset_name))
+    LOG.info('Eval dataset flag: {:s}'.format(dataset_flag))
 
     if dataset_flag == 'val':
         image_file_list = cfg.DATASET.VAL_FILE_LIST
