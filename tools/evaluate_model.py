@@ -154,6 +154,11 @@ def evaluate():
         rotation="1 week"
     )
 
+    LOG.info('Eval model name: {:s}'.format(net_name))
+    LOG.info('Eval dataset name: {:s}'.format(dataset_name))
+    LOG.info('Eval model config path: {:s}'.format(config_file_path))
+    LOG.info('Eval model weights path: {:s}'.format(args.weights_path))
+
     if dataset_flag == 'val':
         image_file_list = cfg.DATASET.VAL_FILE_LIST
     elif dataset_flag == 'test':
@@ -174,6 +179,7 @@ def evaluate():
             gt_labels.append(int(info[1]))
             image_count += 1
     image_count = int((image_count // batch_size) * batch_size)
+    LOG.info('Eval image counts: {:d}'.format(image_count))
 
     if need_shuffle:
         idx = np.random.permutation(len(input_image_paths))
@@ -250,8 +256,10 @@ def evaluate():
             pbar_input_batches.set_description('Cost time: {:.4f}s'.format(t_cost))
 
         # print prediction report
-        print('{:s} {:s} classification_report(left: labels):'.format(cfg.DATASET.DATASET_NAME, cfg.MODEL.MODEL_NAME))
-        print(classification_report(gt_labels, predicted_result))
+        LOG.info(
+            '{:s} {:s} classification_report(left: labels):'.format(cfg.DATASET.DATASET_NAME, cfg.MODEL.MODEL_NAME)
+        )
+        LOG.info(classification_report(gt_labels, predicted_result))
 
         # calculate evaluate statics
         calculate_evaluate_statics(labels=gt_labels, predictions=predicted_result)
