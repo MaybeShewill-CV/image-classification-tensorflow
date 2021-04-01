@@ -106,7 +106,7 @@ def plot_precision_recall_curve(labels, predictions_prob, class_nums, average_fu
         'all classes: AP={:.5f}'.format(average_function, average_precision[average_function]))
 
 
-def calculate_evaluate_statics(labels, predictions, model_name='LuTao_Xception', avgerage_method='weighted'):
+def calculate_evaluate_statics(labels, predictions, model_name='ilsvrc_2012_xception', avgerage_method='weighted'):
     """
     Calculate Precision, Recall and F1 score
     :param labels:
@@ -263,7 +263,9 @@ def evaluate():
         LOG.info(classification_report(gt_labels, predicted_result))
 
         # calculate evaluate statics
-        calculate_evaluate_statics(labels=gt_labels, predictions=predicted_result)
+        calculate_evaluate_statics(labels=gt_labels, predictions=predicted_result, model_name='{:s}_{:s}'.format(
+            cfg.DATASET.DATASET_NAME, cfg.MODEL.MODEL_NAME
+        ))
 
         # plot precision recall curve
         enc = OneHotEncoder(handle_unknown='ignore')
