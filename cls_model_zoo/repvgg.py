@@ -264,7 +264,7 @@ class RepVgg(cnn_basenet.CNNBaseModel):
             apply_reparam=False
         )
 
-        with tf.variable_scope('densenet_loss', reuse=reuse):
+        with tf.variable_scope('repvggnet_loss', reuse=reuse):
             if self._loss_type == 'cross_entropy':
                 ret = self._loss_func(
                     logits=logits,
@@ -284,6 +284,39 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                 raise NotImplementedError('Loss of type: {:s} has not been implemented'.format(self._loss_type))
 
         return ret
+
+    def save_trained_model(self, weights_path, name, reuse=False):
+        """
+
+        :param weights_path:
+        :param name:
+        :param reuse:
+        :return:
+        """
+        input_tensor = tf.placeholder(
+            dtype=tf.float32,
+            shape=[None, self._cfg.AUG.EVAL_CROP_SIZE[1], self._cfg.AUG.EVAL_CROP_SIZE[0], 3],
+            name='input_tensor'
+        )
+
+        _ = self._build_net(
+            input_tensor=input_tensor,
+            name=name,
+            reuse=reuse,
+            apply_reparam=False
+        )
+
+        trained_params = dict()
+        saver = tf.train.Saver()
+        with tf.Session() as sess:
+            saver.restore(sess=sess, save_path=weights_path)
+
+            for vv in tf.trainable_variables():
+                trained_params[vv.name] = sess.run(vv)
+
+        np.save('./repvgg_trainned_params.npy', trained_params)
+
+        return
 
 
 def get_model(phase, cfg):
@@ -314,27 +347,39 @@ def test():
 
     :return:
     """
+
+    params = np.load("repvgg_trainned_params.npy", allow_pickle=True)
+
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_repvgg.yaml')
     test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
     test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
     model = get_model(phase='train', cfg=cfg)
+
     output = model.compute_loss(
         input_tensor=test_input_tensor,
         label=test_label_tensor,
         name='RepVgg',
         reuse=False
     )
+
+    for vv in tf.trainable_variables():
+        params_values = params.item().get(vv.name)
+
     # output = model.inference(input_tensor=test_input_tensor, name='RepVgg', reuse=False)
     print(output)
 
+    saver = tf.train.Saver()
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+
+        saver.save(sess=sess, save_path='./log/repvgg.ckpt')
 
         _stats_graph(sess.graph)
 
         test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
         t_start = time.time()
-        loop_times = 1000
+        loop_times = 1
         for i in range(loop_times):
             _ = sess.run(output, feed_dict={test_input_tensor: test_input, test_label_tensor: [1]})
         t_cost = time.time() - t_start
