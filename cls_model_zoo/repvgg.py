@@ -21,27 +21,6 @@ from cls_model_zoo import loss
 from local_utils import config_utils
 
 
-class NumpyEncoder(json.JSONEncoder):
-    """
-    Special json encoder for numpy types
-    """
-
-    def __init__(self):
-        """
-
-        """
-        super(NumpyEncoder, self).__init__()
-
-    def default(self, obj):
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
-
 class RepVgg(cnn_basenet.CNNBaseModel):
     """
 
@@ -150,7 +129,7 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                     kernel_size=3,
                     padding=padding,
                     stride=stride,
-                    use_bias=use_bias,
+                    use_bias=True,
                     name='conv'
                 )
             else:
