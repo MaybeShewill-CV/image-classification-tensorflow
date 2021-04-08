@@ -15,7 +15,7 @@ from cls_model_zoo import cnn_basenet
 
 class ResnetBase(cnn_basenet.CNNBaseModel):
     """
-    Resnet base local_utils
+    resnet base utils
     """
     def __init__(self, phase):
         """

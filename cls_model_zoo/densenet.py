@@ -20,7 +20,7 @@ from local_utils import config_utils
 
 class DenseNet(cnn_basenet.CNNBaseModel):
     """
-    基于DenseNet的编码器
+    densenet model for image classification
     """
     def __init__(self, phase, cfg):
         """

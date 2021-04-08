@@ -23,9 +23,8 @@ from local_utils import config_utils
 
 class RepVgg(cnn_basenet.CNNBaseModel):
     """
-
+    repvgg model for image classification
     """
-
     def __init__(self, phase, cfg):
         """
 

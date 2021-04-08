@@ -21,7 +21,7 @@ from local_utils import config_utils
 
 class Xception(cnn_basenet.CNNBaseModel):
     """
-    Xception model
+    xception model for image classification
     """
     def __init__(self, phase, cfg):
         """

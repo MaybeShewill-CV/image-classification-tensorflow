@@ -20,7 +20,7 @@ from local_utils import config_utils
 
 class ResNet(resnet_utils.ResnetBase):
     """
-    resnet moedl
+    resnet model for image classification
     """
     def __init__(self, phase, cfg):
         """

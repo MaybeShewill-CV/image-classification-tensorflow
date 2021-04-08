@@ -20,7 +20,7 @@ from local_utils import config_utils
 
 class Vgg(cnn_basenet.CNNBaseModel):
     """
-
+    vgg model for image classification
     """
     def __init__(self, phase, cfg):
         """

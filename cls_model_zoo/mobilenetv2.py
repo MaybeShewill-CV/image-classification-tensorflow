@@ -21,7 +21,7 @@ from local_utils import config_utils
 
 class MobileNetV2(cnn_basenet.CNNBaseModel):
     """
-    MobileNetV2 implementation
+    mobilenetV2 model for image classification
     """
     def __init__(self, phase, cfg):
         """
