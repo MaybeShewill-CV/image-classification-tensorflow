@@ -618,7 +618,7 @@ def check_converted_model():
     args = _init_args()
 
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_repvgg.yaml')
-    model = get_model(phase='train', cfg=cfg)
+    model = get_model(phase='test', cfg=cfg)
     test_input_ndaray = np.random.random((1, 224, 224, 3)).astype(np.float32)
 
     # init trained compute graph
@@ -638,7 +638,8 @@ def check_converted_model():
     with tf.Session() as sess:
         saver.restore(sess=sess, save_path=args.trained_weights_path)
 
-        print(sess.run(logits, feed_dict={test_input_tensor: test_input_ndaray}))
+        train_logits = sess.run(logits, feed_dict={test_input_tensor: test_input_ndaray})
+        print(train_logits)
         print('*' * 100)
 
     # reset compute graph
@@ -654,14 +655,18 @@ def check_converted_model():
     with tf.Session() as sess:
         saver.restore(sess=sess, save_path=args.rep_params_save_path)
 
-        print(sess.run(logits, feed_dict={test_input_tensor: test_input_ndaray}))
+        deploy_logits = sess.run(logits, feed_dict={test_input_tensor: test_input_ndaray})
+        print(deploy_logits)
         print('*' * 100)
+
+    print('========================== The diff is')
+    print(((train_logits - deploy_logits) ** 2).sum())
 
 
 if __name__ == '__main__':
     """
     test code
     """
-    convert_repvgg_params()
+    # convert_repvgg_params()
 
-    # check_converted_model()
+    check_converted_model()
