@@ -8,20 +8,45 @@
 """
 repvgg model created by Xiaohan Ding "RepVGG: Making VGG-style ConvNets Great Again"
 """
+import argparse
 import time
+import json
 
 import tensorflow as tf
 import numpy as np
+import tqdm
 
 from cls_model_zoo import cnn_basenet
 from cls_model_zoo import loss
 from local_utils import config_utils
 
 
+class NumpyEncoder(json.JSONEncoder):
+    """
+    Special json encoder for numpy types
+    """
+
+    def __init__(self):
+        """
+
+        """
+        super(NumpyEncoder, self).__init__()
+
+    def default(self, obj):
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
 class RepVgg(cnn_basenet.CNNBaseModel):
     """
 
     """
+
     def __init__(self, phase, cfg):
         """
 
@@ -197,6 +222,147 @@ class RepVgg(cnn_basenet.CNNBaseModel):
         output = tf.identity(output, name='{:s}_output'.format(name))
         return output
 
+    @classmethod
+    def _fuse_conv_bn_weights(cls, conv_kernel, bn_moving_avg_mean, bn_moving_avg_var, bn_gamma, bn_beta, eps=1e-7):
+        """
+
+        :param conv_kernel:
+        :param bn_moving_avg_mean:
+        :param bn_moving_avg_var:
+        :param bn_gamma:
+        :param bn_beta:
+        :return:
+        """
+        std = np.sqrt(bn_moving_avg_var + eps)
+        t = (bn_gamma / std).reshape(1, 1, 1, -1)
+        output_kernel = conv_kernel * t
+        output_bias = bn_beta - bn_moving_avg_mean * bn_gamma / std
+
+        return output_kernel, output_bias
+
+    @classmethod
+    def _pad_1x1_kernel_to_3x3_kernel(cls, conv_1x1_kernel):
+        """
+
+        :param conv_1x1_kernel:
+        :return:
+        """
+        h, w, in_channels, output_channels = conv_1x1_kernel.shape
+        output = []
+        for in_index in range(in_channels):
+            output_c = []
+            for out_index in range(output_channels):
+                output_c.append(
+                    np.pad(
+                        conv_1x1_kernel[:, :, in_index, out_index],
+                        [[1, 1], [1, 1]],
+                        mode='constant',
+                        constant_values=0.0
+                    )
+                )
+            output.append(output_c)
+
+        return np.array(output, dtype=np.float32).reshape((3, 3, in_channels, output_channels))
+
+    @classmethod
+    def _make_bn_input_layer_bn_equal_conv_kernel(cls, input_channels):
+        """
+
+        :param input_channels:
+        :return:
+        """
+        kernel_value = np.zeros((input_channels, input_channels, 3, 3), dtype=np.float32)
+        for i in range(input_channels):
+            kernel_value[i, i % input_channels, 1, 1] = 1
+
+        return kernel_value.reshape((3, 3, input_channels, input_channels))
+
+    def _fuse_conv_block_params(self, conv_block_params):
+        """
+
+        :param conv_block_params:
+        :return:
+        """
+        conv_1x1_sub_block = dict()
+        conv_3x3_sub_block = dict()
+        conv_input_sub_block = dict()
+
+        for param_name, param_value in conv_block_params:
+            if '1x1' in param_name:
+                if 'moving_variance' in param_name:
+                    conv_1x1_sub_block['bn_moving_avg_var'] = param_value
+                elif 'moving_mean' in param_name:
+                    conv_1x1_sub_block['bn_moving_avg_mean'] = param_value
+                elif 'conv_1x1' in param_name:
+                    conv_1x1_sub_block['conv_kernel'] = param_value
+                elif 'gamma' in param_name:
+                    conv_1x1_sub_block['bn_gamma'] = param_value
+                elif 'beta' in param_name:
+                    conv_1x1_sub_block['bn_beta'] = param_value
+                else:
+                    raise ValueError('Unrecognized params: {:s}'.format(param_name))
+            elif '3x3' in param_name:
+                if 'moving_variance' in param_name:
+                    conv_3x3_sub_block['bn_moving_avg_var'] = param_value
+                elif 'moving_mean' in param_name:
+                    conv_3x3_sub_block['bn_moving_avg_mean'] = param_value
+                elif 'conv_3x3' in param_name:
+                    conv_3x3_sub_block['conv_kernel'] = param_value
+                elif 'gamma' in param_name:
+                    conv_3x3_sub_block['bn_gamma'] = param_value
+                elif 'beta' in param_name:
+                    conv_3x3_sub_block['bn_beta'] = param_value
+                else:
+                    raise ValueError('Unrecognized params: {:s}'.format(param_name))
+            elif 'bn_input' in param_name:
+                if 'moving_variance' in param_name:
+                    conv_input_sub_block['bn_moving_avg_var'] = param_value
+                elif 'moving_mean' in param_name:
+                    conv_input_sub_block['bn_moving_avg_mean'] = param_value
+                elif 'gamma' in param_name:
+                    conv_input_sub_block['bn_gamma'] = param_value
+                elif 'beta' in param_name:
+                    conv_input_sub_block['bn_beta'] = param_value
+                else:
+                    raise ValueError('Unrecognized params: {:s}'.format(param_name))
+            else:
+                raise ValueError('Unrecognized param name: {:s}'.format(param_name))
+
+        conv_1x1_fused_kernel, conv_1x1_fused_bias = self._fuse_conv_bn_weights(
+            conv_kernel=conv_1x1_sub_block['conv_kernel'],
+            bn_moving_avg_mean=conv_1x1_sub_block['bn_moving_avg_mean'],
+            bn_moving_avg_var=conv_1x1_sub_block['bn_moving_avg_var'],
+            bn_gamma=conv_1x1_sub_block['bn_gamma'],
+            bn_beta=conv_1x1_sub_block['bn_beta']
+        )
+        conv_3x3_fused_kernel, conv_3x3_fused_bias = self._fuse_conv_bn_weights(
+            conv_kernel=conv_3x3_sub_block['conv_kernel'],
+            bn_moving_avg_mean=conv_3x3_sub_block['bn_moving_avg_mean'],
+            bn_moving_avg_var=conv_3x3_sub_block['bn_moving_avg_var'],
+            bn_gamma=conv_3x3_sub_block['bn_gamma'],
+            bn_beta=conv_3x3_sub_block['bn_beta']
+        )
+
+        if conv_input_sub_block:
+            conv_input_sub_block['conv_kernel'] = self._make_bn_input_layer_bn_equal_conv_kernel(
+                input_channels=conv_input_sub_block['bn_beta'].shape[0]
+            )
+            conv_input_fused_kernel, conv_input_fused_bias = self._fuse_conv_bn_weights(
+                conv_kernel=conv_input_sub_block['conv_kernel'],
+                bn_moving_avg_mean=conv_input_sub_block['bn_moving_avg_mean'],
+                bn_moving_avg_var=conv_input_sub_block['bn_moving_avg_var'],
+                bn_gamma=conv_input_sub_block['bn_gamma'],
+                bn_beta=conv_input_sub_block['bn_beta']
+            )
+            output_kernel = conv_3x3_fused_kernel + self._pad_1x1_kernel_to_3x3_kernel(conv_1x1_fused_kernel) + \
+                            conv_input_fused_kernel
+            output_bias = conv_3x3_fused_bias + conv_1x1_fused_bias + conv_input_fused_bias
+        else:
+            output_kernel = conv_3x3_fused_kernel + self._pad_1x1_kernel_to_3x3_kernel(conv_1x1_fused_kernel)
+            output_bias = conv_3x3_fused_bias + conv_1x1_fused_bias
+
+        return output_kernel, output_bias
+
     def _build_net(self, input_tensor, name, reuse=False, apply_reparam=False):
         """
 
@@ -285,7 +451,7 @@ class RepVgg(cnn_basenet.CNNBaseModel):
 
         return ret
 
-    def save_trained_model(self, weights_path, name, reuse=False):
+    def save_trained_model(self, weights_path, name, reuse=True):
         """
 
         :param weights_path:
@@ -306,27 +472,64 @@ class RepVgg(cnn_basenet.CNNBaseModel):
             apply_reparam=False
         )
 
+        with tf.variable_scope(name_or_scope='moving_avg'):
+            variable_averages = tf.train.ExponentialMovingAverage(self._cfg.SOLVER.MOVING_AVE_DECAY)
+            variables_to_restore = variable_averages.variables_to_restore()
+
         trained_params = dict()
-        saver = tf.train.Saver()
+        saver = tf.train.Saver(variables_to_restore)
         with tf.Session() as sess:
             saver.restore(sess=sess, save_path=weights_path)
 
-            for vv in tf.trainable_variables():
-                trained_params[vv.name] = sess.run(vv)
+            for vv_name, vv in variables_to_restore.items():
+                trained_params[vv_name] = sess.run(vv).tolist()
 
-        np.save('./repvgg_trainned_params.npy', trained_params)
+        # with open('./repvgg_trainned_params.json', 'w') as file:
+        #     json.dump(obj=trained_params, fp=file)
 
-        return
+        return trained_params
 
+    def convert_reparams(self, repvgg_trainned_params: dict, repvgg_converted_param_names):
+        """
 
-def get_model(phase, cfg):
-    """
+        :param repvgg_trainned_params:
+        :param repvgg_converted_param_names:
+        :return:
+        """
+        converted_params = dict()
+        for param_name in tqdm.tqdm(repvgg_converted_param_names):
+            param_name_tmp = '/'.join(param_name.split('/')[:3]).replace(':0', '')
+            output_kernel = None
+            output_bias = None
+            if 'final_logits' in param_name:
+                if 'kernel' in param_name:
+                    for trainned_param_name, trainned_param_value in repvgg_trainned_params.items():
+                        if 'final_logits' in trainned_param_name and 'kernel' in trainned_param_name:
+                            output_kernel = trainned_param_value
+                elif 'bias' in param_name:
+                    for trainned_param_name, trainned_param_value in repvgg_trainned_params.items():
+                        if 'final_logits' in trainned_param_name and 'bias' in trainned_param_name:
+                            output_bias = trainned_param_value
+                else:
+                    raise ValueError('Unrecognized params: {:s}'.format(param_name))
+            else:
+                corresponding_params = []
+                for trainned_param_name, trainned_param_value in repvgg_trainned_params.items():
+                    if 'moving_avg' in trainned_param_name:
+                        trainned_param_name_tmp = '/'.join(trainned_param_name.split('/')[1:4])
+                    else:
+                        trainned_param_name_tmp = '/'.join(trainned_param_name.split('/')[:3])
+                    if param_name_tmp == trainned_param_name_tmp:
+                        corresponding_params.append((trainned_param_name, trainned_param_value))
 
-    :param phase:
-    :param cfg:
-    :return:
-    """
-    return RepVgg(phase=phase, cfg=cfg)
+                output_kernel, output_bias = self._fuse_conv_block_params(corresponding_params)
+
+            converted_params[param_name] = {
+                'kernel': output_kernel,
+                'bias': output_bias
+            }
+
+        return converted_params
 
 
 def _stats_graph(graph):
@@ -342,55 +545,144 @@ def _stats_graph(graph):
     return
 
 
-def test():
+def get_model(phase, cfg):
+    """
+
+    :param phase:
+    :param cfg:
+    :return:
+    """
+    return RepVgg(phase=phase, cfg=cfg)
+
+
+def _init_args():
     """
 
     :return:
     """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--trained_weights_path', type=str, help='The trainned repvgg model ckpt weights path')
+    parser.add_argument('--rep_params_save_path', type=str)
 
-    params = np.load("repvgg_trainned_params.npy", allow_pickle=True)
+    return parser.parse_args()
 
+
+def convert_repvgg_params():
+    """
+
+    :return:
+    """
+    args = _init_args()
+
+    # init compute graph
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_repvgg.yaml')
-    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
-    test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
     model = get_model(phase='train', cfg=cfg)
 
-    output = model.compute_loss(
+    # save trainned repvgg params into json
+    repvgg_trainned_params = dict()
+    trained_params = model.save_trained_model(weights_path=args.trained_weights_path, name='RepVgg', reuse=False)
+    for param_name, param_value in trained_params.items():
+        if 'final_logits' in param_name:
+            print(param_name)
+        repvgg_trainned_params[param_name] = np.array(param_value, dtype=np.float32)
+
+    # build repvgg inference compute graph
+    tf.reset_default_graph()
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
+    _ = model.inference(
         input_tensor=test_input_tensor,
-        label=test_label_tensor,
         name='RepVgg',
         reuse=False
     )
-
+    repvgg_converted_names = []
     for vv in tf.trainable_variables():
-        params_values = params.item().get(vv.name)
+        repvgg_converted_names.append(vv.name)
 
-    # output = model.inference(input_tensor=test_input_tensor, name='RepVgg', reuse=False)
-    print(output)
+    converted_params = model.convert_reparams(
+        repvgg_trainned_params=repvgg_trainned_params,
+        repvgg_converted_param_names=repvgg_converted_names
+    )
 
-    saver = tf.train.Saver()
+    saver = tf.train.Saver(tf.global_variables())
 
     with tf.Session() as sess:
+
         sess.run(tf.global_variables_initializer())
+        # train_vars = enumerate(tf.trainable_variables())
 
-        saver.save(sess=sess, save_path='./log/repvgg.ckpt')
+        for index, vv in enumerate(tf.trainable_variables()):
+            if index == 0:
+                print(vv.name)
+                print(sess.run(vv))
+                print('*' * 20)
 
-        _stats_graph(sess.graph)
+        for index, vv in enumerate(tf.trainable_variables()):
+            kernel = converted_params[vv.name]['kernel']
+            if kernel is None:
+                continue
+            sess.run(tf.assign(vv, kernel))
+            if index == 0:
+                print(vv.name)
+                print(sess.run(vv))
+                print('*' * 20)
 
-        test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
-        t_start = time.time()
-        loop_times = 1
-        for i in range(loop_times):
-            _ = sess.run(output, feed_dict={test_input_tensor: test_input, test_label_tensor: [1]})
-        t_cost = time.time() - t_start
-        print('Cost time: {:.5f}s'.format(t_cost / loop_times))
-        print('Inference time: {:.5f} fps'.format(loop_times / t_cost))
+        saver.save(sess, save_path=args.rep_params_save_path)
 
     print('Complete')
+
+
+def check_converted_model():
+    """
+
+    :return:
+    """
+    args = _init_args()
+
+    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_repvgg.yaml')
+    model = get_model(phase='train', cfg=cfg)
+    test_input_ndaray = np.random.random((1, 224, 224, 3)).astype(np.float32)
+
+    # init trained compute graph
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 224, 224, 3], name='test_input')
+    logits = model._build_net(
+        input_tensor=test_input_tensor,
+        name='RepVgg',
+        reuse=False,
+        apply_reparam=False
+    )
+
+    with tf.variable_scope(name_or_scope='moving_avg'):
+        variable_averages = tf.train.ExponentialMovingAverage(cfg.SOLVER.MOVING_AVE_DECAY)
+        variables_to_restore = variable_averages.variables_to_restore()
+
+    saver = tf.train.Saver(variables_to_restore)
+    with tf.Session() as sess:
+        saver.restore(sess=sess, save_path=args.trained_weights_path)
+
+        print(sess.run(logits, feed_dict={test_input_tensor: test_input_ndaray}))
+        print('*' * 100)
+
+    # reset compute graph
+    tf.reset_default_graph()
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 224, 224, 3], name='test_input')
+    logits = model.inference(
+        input_tensor=test_input_tensor,
+        name='RepVgg',
+        reuse=False,
+    )
+    saver = tf.train.Saver(tf.global_variables())
+
+    with tf.Session() as sess:
+        saver.restore(sess=sess, save_path=args.rep_params_save_path)
+
+        print(sess.run(logits, feed_dict={test_input_tensor: test_input_ndaray}))
+        print('*' * 100)
 
 
 if __name__ == '__main__':
     """
     test code
     """
-    test()
+    # convert_repvgg_params()
+
+    check_converted_model()
