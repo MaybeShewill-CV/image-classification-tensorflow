@@ -430,12 +430,13 @@ class RepVgg(cnn_basenet.CNNBaseModel):
 
         return ret
 
-    def save_trained_model(self, weights_path, name, reuse=True):
+    def save_trained_model(self, weights_path, name, reuse=True, dump_to_json=False):
         """
 
         :param weights_path:
         :param name:
         :param reuse:
+        :param dump_to_json:
         :return:
         """
         input_tensor = tf.placeholder(
@@ -463,8 +464,9 @@ class RepVgg(cnn_basenet.CNNBaseModel):
             for vv_name, vv in variables_to_restore.items():
                 trained_params[vv_name] = sess.run(vv).tolist()
 
-        # with open('./repvgg_trainned_params.json', 'w') as file:
-        #     json.dump(obj=trained_params, fp=file)
+        if dump_to_json:
+            with open('./repvgg_trainned_params.json', 'w') as file:
+                json.dump(obj=trained_params, fp=file)
 
         return trained_params
 
@@ -503,10 +505,12 @@ class RepVgg(cnn_basenet.CNNBaseModel):
 
                 output_kernel, output_bias = self._fuse_conv_block_params(corresponding_params)
 
-            converted_params[param_name] = {
-                'kernel': output_kernel,
-                'bias': output_bias
-            }
+            if 'bias' in param_name or 'b' in param_name.split('/')[-1]:
+                converted_params[param_name] = output_bias
+            elif 'kernel' in param_name or 'W' in param_name.split('/')[-1] :
+                converted_params[param_name] = output_kernel
+            else:
+                raise ValueError('Unrecognized param: {:s}'.format(param_name))
 
         return converted_params
 
@@ -596,9 +600,7 @@ def convert_repvgg_params():
                 print('*' * 20)
 
         for index, vv in enumerate(tf.trainable_variables()):
-            kernel = converted_params[vv.name]['kernel']
-            if kernel is None:
-                continue
+            kernel = converted_params[vv.name]
             sess.run(tf.assign(vv, kernel))
             if index == 0:
                 print(vv.name)
@@ -662,6 +664,6 @@ if __name__ == '__main__':
     """
     test code
     """
-    # convert_repvgg_params()
+    convert_repvgg_params()
 
-    check_converted_model()
+    # check_converted_model()
