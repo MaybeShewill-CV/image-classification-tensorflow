@@ -241,7 +241,7 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                 )
             output.append(output_c)
 
-        return np.array(output, dtype=np.float32).reshape((3, 3, in_channels, output_channels))
+        return np.array(output, dtype=np.float32).transpose((2, 3, 0, 1))
 
     @classmethod
     def _make_bn_input_layer_bn_equal_conv_kernel(cls, input_channels):
@@ -254,7 +254,7 @@ class RepVgg(cnn_basenet.CNNBaseModel):
         for i in range(input_channels):
             kernel_value[i, i % input_channels, 1, 1] = 1
 
-        return kernel_value.reshape((3, 3, input_channels, input_channels))
+        return kernel_value.transpose((2, 3, 0, 1))
 
     def _fuse_conv_block_params(self, conv_block_params):
         """
@@ -565,8 +565,6 @@ def convert_repvgg_params():
     repvgg_trainned_params = dict()
     trained_params = model.save_trained_model(weights_path=args.trained_weights_path, name='RepVgg', reuse=False)
     for param_name, param_value in trained_params.items():
-        if 'final_logits' in param_name:
-            print(param_name)
         repvgg_trainned_params[param_name] = np.array(param_value, dtype=np.float32)
 
     # build repvgg inference compute graph
