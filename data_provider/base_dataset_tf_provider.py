@@ -110,6 +110,7 @@ class DataSet(metaclass=ABCMeta):
         dataset = tf.data.Dataset.from_tensor_slices(
             (self._sample_image_file_path, self._sample_label)
         )
+        dataset = dataset.shuffle(buffer_size=self._shuffle_buffer_size)
         # Read image and point coordinates
         dataset = dataset.map(
             lambda images_path, labels: {'images_path': images_path, 'labels': labels},
@@ -141,6 +142,7 @@ class DataSet(metaclass=ABCMeta):
             {'aug_images': aug_result, 'images': images, 'images_path': images_path, 'labels': labels},
             num_parallel_calls=auto_tune
         )
+
         dataset = dataset.padded_batch(
             batch_size=self._batch_size,
             padded_shapes={
@@ -158,11 +160,6 @@ class DataSet(metaclass=ABCMeta):
             drop_remainder=True
         )
 
-        # The shuffle transformation uses a finite-sized buffer to shuffle elements
-        # in memory. The parameter is the number of elements in the buffer. For
-        # completely uniform shuffling, set the parameter to be the same as the
-        # number of elements in the dataset.
-        dataset = dataset.shuffle(buffer_size=self._shuffle_buffer_size)
         # repeat num epochs
         dataset = dataset.repeat(self._epoch_nums)
 
