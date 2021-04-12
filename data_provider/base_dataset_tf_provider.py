@@ -162,7 +162,7 @@ class DataSet(metaclass=ABCMeta):
         # in memory. The parameter is the number of elements in the buffer. For
         # completely uniform shuffling, set the parameter to be the same as the
         # number of elements in the dataset.
-        dataset = dataset.shuffle(auto_tune)
+        dataset = dataset.shuffle(buffer_size=self._shuffle_buffer_size)
         # repeat num epochs
         dataset = dataset.repeat(self._epoch_nums)
 
