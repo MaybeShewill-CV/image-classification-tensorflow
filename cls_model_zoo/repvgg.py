@@ -107,7 +107,7 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                 'repvgg-b1, repvgg-b2, repvgg-b3] supported'
             )
 
-    def _conv_block(self, input_tensor, output_channels, stride, name, padding='SAME',
+    def _conv_block(self, input_tensor, output_channels, stride, name, padding='VALID',
                     use_bias=False, apply_reparam=False):
         """
 
@@ -122,6 +122,8 @@ class RepVgg(cnn_basenet.CNNBaseModel):
         """
         with tf.variable_scope(name_or_scope=name):
             if apply_reparam:
+                if padding == 'VALID':
+                    input_tensor = tf.keras.layers.ZeroPadding2D().call(inputs=input_tensor)
                 output = self.conv2d(
                     inputdata=input_tensor,
                     out_channel=output_channels,
@@ -133,8 +135,10 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                 )
             else:
                 input_channles = input_tensor.get_shape().as_list()[-1]
+                conv_3x3_input_tensor = tf.keras.layers.ZeroPadding2D().call(inputs=input_tensor) if \
+                    padding == 'VALID' else input_tensor
                 conv_3x3 = self.conv2d(
-                    inputdata=input_tensor,
+                    inputdata=conv_3x3_input_tensor,
                     out_channel=output_channels,
                     kernel_size=3,
                     padding=padding,
@@ -143,8 +147,10 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                     name='conv_3x3'
                 )
                 bn_3x3 = self.layerbn(inputdata=conv_3x3, is_training=self._is_training, name='bn_3x3', scale=True)
+                conv_1x1_input_tensor = tf.keras.layers.ZeroPadding2D(padding=0).call(inputs=input_tensor) if \
+                    padding == 'VALID' else input_tensor
                 conv_1x1 = self.conv2d(
-                    inputdata=input_tensor,
+                    inputdata=conv_1x1_input_tensor,
                     out_channel=output_channels,
                     kernel_size=1,
                     padding=padding,
@@ -364,16 +370,18 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                     name='conv_stage_{:d}'.format(index + 1),
                     apply_reparam=apply_reparam
                 )
-            output = self.globalavgpooling(
-                inputdata=output,
-                name='global_average_pooling'
-            )
-            logits = self.fullyconnect(
-                inputdata=output,
-                out_dim=self._class_nums,
-                name='final_logits'
-            )
-        return logits
+                if index == 0:
+                    break
+            # output = self.globalavgpooling(
+            #     inputdata=output,
+            #     name='global_average_pooling'
+            # )
+            # logits = self.fullyconnect(
+            #     inputdata=output,
+            #     out_dim=self._class_nums,
+            #     name='final_logits'
+            # )
+        return output
 
     def inference(self, input_tensor, name, reuse=False):
         """
@@ -476,11 +484,13 @@ class RepVgg(cnn_basenet.CNNBaseModel):
         :param repvgg_converted_param_names:
         :return:
         """
+        tmp_info = dict()
         converted_params = dict()
         for param_name in tqdm.tqdm(repvgg_converted_param_names):
             param_name_tmp = '/'.join(param_name.split('/')[:3]).replace(':0', '')
             output_kernel = None
             output_bias = None
+            tmp_info[param_name] = []
             if 'final_logits' in param_name:
                 if 'kernel' in param_name:
                     for trainned_param_name, trainned_param_value in repvgg_trainned_params.items():
@@ -501,8 +511,13 @@ class RepVgg(cnn_basenet.CNNBaseModel):
                         trainned_param_name_tmp = '/'.join(trainned_param_name.split('/')[:3])
                     if param_name_tmp == trainned_param_name_tmp:
                         corresponding_params.append((trainned_param_name, trainned_param_value))
+                        tmp_info[param_name].append(trainned_param_name)
 
                 output_kernel, output_bias = self._fuse_conv_block_params(corresponding_params)
+
+
+            with open('tmp.json', 'w') as file:
+                json.dump(tmp_info, file)
 
             if 'bias' in param_name or 'b' in param_name.split('/')[-1]:
                 converted_params[param_name] = output_bias
@@ -549,11 +564,43 @@ def _init_args():
     return parser.parse_args()
 
 
+def save_train_params():
+    """
+
+    :return:
+    """
+    tf.reset_default_graph()
+    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_repvgg.yaml')
+    model = get_model(phase='train', cfg=cfg)
+    input_tensor = tf.placeholder(
+        dtype=tf.float32,
+        shape=[None, 224, 224, 3],
+        name='input_tensor'
+    )
+
+    _ = model._build_net(
+        input_tensor=input_tensor,
+        name='RepVgg',
+        reuse=False,
+        apply_reparam=False
+    )
+
+    with tf.variable_scope(name_or_scope='moving_avg'):
+        variable_averages = tf.train.ExponentialMovingAverage(cfg.SOLVER.MOVING_AVE_DECAY)
+        variables_to_restore = variable_averages.variables_to_restore()
+
+    saver = tf.train.Saver(variables_to_restore)
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        saver.save(sess=sess, save_path='./log/train/repvgg_train.ckpt')
+
+
 def convert_repvgg_params():
     """
 
     :return:
     """
+    tf.reset_default_graph()
     args = _init_args()
 
     # init compute graph
@@ -588,7 +635,6 @@ def convert_repvgg_params():
     with tf.Session() as sess:
 
         sess.run(tf.global_variables_initializer())
-        # train_vars = enumerate(tf.trainable_variables())
 
         for index, vv in enumerate(tf.trainable_variables()):
             if index == 0:
@@ -614,6 +660,7 @@ def check_converted_model():
 
     :return:
     """
+    tf.reset_default_graph()
     args = _init_args()
 
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_repvgg.yaml')
@@ -666,6 +713,8 @@ if __name__ == '__main__':
     """
     test code
     """
-    # convert_repvgg_params()
+    save_train_params()
+
+    convert_repvgg_params()
 
     check_converted_model()

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2021/4/9 下午2:31
-# @Author  : LuoYao
-# @Site    : ICode
+# @Author  : MaybeShewill-CV
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @File    : verify_repvgg_conv.py
 # @IDE: PyCharm
 """
@@ -20,12 +20,12 @@ from cls_model_zoo import cnn_basenet
 from cls_model_zoo import loss
 from local_utils import config_utils
 
-PADDING = 'SAME'
+PADDING = 'VALID'
 PHASE = 'test'
 INPUT_TENSOR_SIZE = [224, 224]
 INPUT_CHANNELS = 3
 OUTPUT_CHANNELS = 64
-STRIDE = 1
+STRIDE = 2
 
 
 class RepVggTest(cnn_basenet.CNNBaseModel):
@@ -199,7 +199,7 @@ class RepVggTest(cnn_basenet.CNNBaseModel):
 
         return output_kernel, output_bias
 
-    def conv_block(self, input_tensor, output_channels, stride, name, padding='SAME', apply_reparam=False):
+    def conv_block(self, input_tensor, output_channels, stride, name, padding='VALID', apply_reparam=False):
         """
 
         :param input_tensor:
@@ -212,6 +212,8 @@ class RepVggTest(cnn_basenet.CNNBaseModel):
         """
         with tf.variable_scope(name_or_scope=name):
             if apply_reparam:
+                if padding == 'VALID':
+                    input_tensor = tf.keras.layers.ZeroPadding2D().call(inputs=input_tensor)
                 output = self.conv2d(
                     inputdata=input_tensor,
                     out_channel=output_channels,
@@ -223,8 +225,10 @@ class RepVggTest(cnn_basenet.CNNBaseModel):
                 )
             else:
                 input_channles = input_tensor.get_shape().as_list()[-1]
+                conv_3x3_input_tensor = tf.keras.layers.ZeroPadding2D().call(inputs=input_tensor) if \
+                    padding == 'VALID' else input_tensor
                 conv_3x3 = self.conv2d(
-                    inputdata=input_tensor,
+                    inputdata=conv_3x3_input_tensor,
                     out_channel=output_channels,
                     kernel_size=3,
                     padding=padding,
@@ -233,8 +237,10 @@ class RepVggTest(cnn_basenet.CNNBaseModel):
                     name='conv_3x3'
                 )
                 bn_3x3 = self.layerbn(inputdata=conv_3x3, is_training=self._is_training, name='bn_3x3', scale=True)
+                conv_1x1_input_tensor = tf.keras.layers.ZeroPadding2D(padding=0).call(inputs=input_tensor) if \
+                    padding == 'VALID' else input_tensor
                 conv_1x1 = self.conv2d(
-                    inputdata=input_tensor,
+                    inputdata=conv_1x1_input_tensor,
                     out_channel=output_channels,
                     kernel_size=1,
                     padding=padding,
