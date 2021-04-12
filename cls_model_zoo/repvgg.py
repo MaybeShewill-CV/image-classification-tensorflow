@@ -515,7 +515,6 @@ class RepVgg(cnn_basenet.CNNBaseModel):
 
                 output_kernel, output_bias = self._fuse_conv_block_params(corresponding_params)
 
-
             with open('tmp.json', 'w') as file:
                 json.dump(tmp_info, file)
 
