@@ -104,70 +104,68 @@ class DataSet(metaclass=ABCMeta):
         if self._sample_image_file_path is None or self._sample_label is None:
             raise ValueError('Sample index file paths was not successfully initialized, '
                              'please check your sample index file')
-        with tf.device('/cpu:0'):
-            # Initialize dataset with file names
-            dataset = tf.data.Dataset.from_tensor_slices(
-                (self._sample_image_file_path, self._sample_label)
-            )
-            # Read image and point coordinates
-            dataset = dataset.map(
-                lambda images_path, labels: {'images_path': images_path, 'labels': labels},
-                num_parallel_calls=self._cpu_multi_process_nums
-            )
-            dataset = dataset.map(
-                lambda d: (self._read_image_file(d['images_path']), d['images_path'], self._read_label(d['labels'])),
-                num_parallel_calls=self._cpu_multi_process_nums
-            )
-            dataset = dataset.map(
-                lambda image, images_path, labels: (image, images_path, labels),
-                num_parallel_calls=self._cpu_multi_process_nums
-            )
 
-            dataset = dataset.map(
-                lambda image, images_path, labels: {'images': image, 'images_path': images_path, 'labels': labels},
-                num_parallel_calls=self._cpu_multi_process_nums
-            )
-            dataset = dataset.map(
-                lambda d:
-                (self._augment_samples(d['images']),
-                 d['images'],
-                 d['images_path'],
-                 d['labels']),
-                num_parallel_calls=self._cpu_multi_process_nums
-            )
-            dataset = dataset.map(
-                lambda aug_result, images, images_path, labels:
-                {'aug_images': aug_result, 'images': images, 'images_path': images_path, 'labels': labels},
-                num_parallel_calls=self._cpu_multi_process_nums
-            )
+        auto_tune = tf.data.experimental.AUTOTUNE
+        # Initialize dataset with file names
+        dataset = tf.data.Dataset.from_tensor_slices(
+            (self._sample_image_file_path, self._sample_label)
+        )
+        dataset = dataset.shuffle(buffer_size=self._shuffle_buffer_size)
+        # Read image and point coordinates
+        dataset = dataset.map(
+            lambda images_path, labels: {'images_path': images_path, 'labels': labels},
+            num_parallel_calls=auto_tune
+        )
+        dataset = dataset.map(
+            lambda d: (self._read_image_file(d['images_path']), d['images_path'], self._read_label(d['labels'])),
+            num_parallel_calls=auto_tune
+        )
+        dataset = dataset.map(
+            lambda image, images_path, labels: (image, images_path, labels),
+            num_parallel_calls=auto_tune
+        )
 
-            # The shuffle transformation uses a finite-sized buffer to shuffle elements
-            # in memory. The parameter is the number of elements in the buffer. For
-            # completely uniform shuffling, set the parameter to be the same as the
-            # number of elements in the dataset.
-            dataset = dataset.shuffle(buffer_size=self._shuffle_buffer_size)
-            # repeat num epochs
-            dataset = dataset.repeat(self._epoch_nums)
+        dataset = dataset.map(
+            lambda image, images_path, labels: {'images': image, 'images_path': images_path, 'labels': labels},
+            num_parallel_calls=auto_tune
+        )
+        dataset = dataset.map(
+            lambda d:
+            (self._augment_samples(d['images']),
+             d['images'],
+             d['images_path'],
+             d['labels']),
+            num_parallel_calls=auto_tune
+        )
+        dataset = dataset.map(
+            lambda aug_result, images, images_path, labels:
+            {'aug_images': aug_result, 'images': images, 'images_path': images_path, 'labels': labels},
+            num_parallel_calls=auto_tune
+        )
 
-            dataset = dataset.padded_batch(
-                batch_size=self._batch_size,
-                padded_shapes={
-                    'aug_images': [None, None, 3],
-                    'images': [None, None, 3],
-                    'images_path': [],
-                    'labels': [],
-                },
-                padding_values={
-                    'aug_images': 0.0,
-                    'images': 0.0,
-                    'images_path': 'None',
-                    'labels': -1,
-                },
-                drop_remainder=True
-            )
-            dataset = dataset.prefetch(buffer_size=self._prefetch_size)
+        dataset = dataset.padded_batch(
+            batch_size=self._batch_size,
+            padded_shapes={
+                'aug_images': [None, None, 3],
+                'images': [None, None, 3],
+                'images_path': [],
+                'labels': [],
+            },
+            padding_values={
+                'aug_images': 0.0,
+                'images': 0.0,
+                'images_path': 'None',
+                'labels': -1,
+            },
+            drop_remainder=True
+        )
 
-            iterator = dataset.make_one_shot_iterator()
+        # repeat num epochs
+        dataset = dataset.repeat(self._epoch_nums)
+
+        dataset = dataset.prefetch(auto_tune)
+
+        iterator = dataset.make_one_shot_iterator()
 
         return iterator.get_next(name='{:s}_iterator_getnext'.format(self._dataset_flag))
 
