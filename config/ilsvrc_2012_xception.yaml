@@ -1,6 +1,6 @@
 AUG:
     RESIZE_METHOD: 'unpadding' # choice unpadding rangescaling and stepscaling
-    FIX_RESIZE_SIZE: [224, 224] # (width, height), for unpadding
+    FIX_RESIZE_SIZE: [256, 256] # (width, height), for unpadding
     INF_RESIZE_VALUE: 500  # for rangescaling
     MAX_RESIZE_VALUE: 600  # for rangescaling
     MIN_RESIZE_VALUE: 400  # for rangescaling
@@ -26,7 +26,7 @@ DATASET:
     DATASET_NAME: 'ilsvrc_2012'
     DATA_DIR: './data/ilsvrc_2012_dataset'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
-    NUM_CLASSES: 1000
+    NUM_CLASSES: 935
     TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
     TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
     VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
@@ -51,21 +51,26 @@ TRAIN:
     RESTORE_FROM_SNAPSHOT:
         ENABLE: False
         SNAPSHOT_PATH: ''
-    SNAPSHOT_EPOCH: 8
+    SNAPSHOT_EPOCH: 4
     BATCH_SIZE: 32
-    EPOCH_NUMS: 513
+    EPOCH_NUMS: 65
     WARM_UP:
         ENABLE: False
-        EPOCH_NUMS: 5
+        EPOCH_NUMS: 4
     FREEZE_BN:
         ENABLE: False
+    FAST_DATA_PROVIDER:
+        ENABLE: True
+        MULTI_PROCESSOR_NUMS: 6
+        SHUFFLE_BUFFER_SIZE: 128
+        PREFETCH_SIZE: 256
 SOLVER:
-    LR: 0.001
+    LR: 0.045
     LR_POLICY: 'poly'
     LR_POLYNOMIAL_POWER: 0.95
     OPTIMIZER: 'sgd'
     MOMENTUM: 0.9
-    WEIGHT_DECAY: 0.0001
+    WEIGHT_DECAY: 0.0005
     MOVING_AVE_DECAY: 0.9995
     LOSS_TYPE: 'cross_entropy'
 GPU:
