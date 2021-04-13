@@ -1,6 +1,6 @@
 AUG:
     RESIZE_METHOD: 'unpadding' # choice unpadding rangescaling and stepscaling
-    FIX_RESIZE_SIZE: [224, 224] # (width, height), for unpadding
+    FIX_RESIZE_SIZE: [256, 256] # (width, height), for unpadding
     INF_RESIZE_VALUE: 500  # for rangescaling
     MAX_RESIZE_VALUE: 600  # for rangescaling
     MIN_RESIZE_VALUE: 400  # for rangescaling
@@ -24,12 +24,12 @@ AUG:
         SATURATION_JITTER_RATIO: 0.5
 DATASET:
     DATASET_NAME: 'ilsvrc_2012'
-    DATA_DIR: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012'
+    DATA_DIR: './data/ilsvrc_2012_dataset'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
-    NUM_CLASSES: 1000
-    TEST_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/test.txt'
-    TRAIN_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/train.txt'
-    VAL_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/val.txt'
+    NUM_CLASSES: 935
+    TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
+    TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
+    VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
     MEAN_VALUE: [104.00698793, 116.66876762, 122.67891434]
@@ -38,7 +38,13 @@ FREEZE:
     MODEL_FILENAME: 'model'
     PARAMS_FILENAME: 'params'
 MODEL:
-    MODEL_NAME: 'mobilenetv2'
+    MODEL_NAME: 'densenet'
+    DENSENET:
+        GROWTH_RATE: 32
+        BLOCK_NUMS: 4
+        ENABLE_BC: True
+        BC_THETA: 0.5
+        NET_SIZE: 121
 TEST:
     TEST_MODEL: 'model/mobilenetv2/final'
 TRAIN:
@@ -56,6 +62,11 @@ TRAIN:
         EPOCH_NUMS: 5
     FREEZE_BN:
         ENABLE: False
+    FAST_DATA_PROVIDER:
+        ENABLE: True
+        MULTI_PROCESSOR_NUMS: 8
+        SHUFFLE_BUFFER_SIZE: 1024
+        PREFETCH_SIZE: 2048
 SOLVER:
     LR: 0.001
     LR_POLICY: 'poly'
