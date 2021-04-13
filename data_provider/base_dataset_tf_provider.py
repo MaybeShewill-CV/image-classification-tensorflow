@@ -108,9 +108,8 @@ class DataSet(metaclass=ABCMeta):
         # Initialize dataset with file names
         dataset = tf.data.Dataset.from_tensor_slices(
             (self._sample_image_file_path, self._sample_label)
-        )
+        ).cache()
         dataset = dataset.shuffle(buffer_size=self._shuffle_buffer_size)
-        dataset = dataset.repeat(self._epoch_nums)
         # Read image and point coordinates
         dataset = dataset.map(
             lambda images_path, labels: {'images_path': images_path, 'labels': labels},
@@ -159,6 +158,7 @@ class DataSet(metaclass=ABCMeta):
             },
             drop_remainder=True
         )
+        dataset = dataset.repeat(self._epoch_nums)
         dataset = dataset.prefetch(self._prefetch_size)
 
         iterator = dataset.make_one_shot_iterator()
