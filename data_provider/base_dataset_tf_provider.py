@@ -105,29 +105,29 @@ class DataSet(metaclass=ABCMeta):
             raise ValueError('Sample index file paths was not successfully initialized, '
                              'please check your sample index file')
 
-        auto_tune = tf.data.experimental.AUTOTUNE
         # Initialize dataset with file names
         dataset = tf.data.Dataset.from_tensor_slices(
             (self._sample_image_file_path, self._sample_label)
         )
         dataset = dataset.shuffle(buffer_size=self._shuffle_buffer_size)
+        dataset = dataset.repeat(self._epoch_nums)
         # Read image and point coordinates
         dataset = dataset.map(
             lambda images_path, labels: {'images_path': images_path, 'labels': labels},
-            num_parallel_calls=auto_tune
+            num_parallel_calls=self._cpu_multi_process_nums
         )
         dataset = dataset.map(
             lambda d: (self._read_image_file(d['images_path']), d['images_path'], self._read_label(d['labels'])),
-            num_parallel_calls=auto_tune
+            num_parallel_calls=self._cpu_multi_process_nums
         )
         dataset = dataset.map(
             lambda image, images_path, labels: (image, images_path, labels),
-            num_parallel_calls=auto_tune
+            num_parallel_calls=self._cpu_multi_process_nums
         )
 
         dataset = dataset.map(
             lambda image, images_path, labels: {'images': image, 'images_path': images_path, 'labels': labels},
-            num_parallel_calls=auto_tune
+            num_parallel_calls=self._cpu_multi_process_nums
         )
         dataset = dataset.map(
             lambda d:
@@ -135,12 +135,12 @@ class DataSet(metaclass=ABCMeta):
              d['images'],
              d['images_path'],
              d['labels']),
-            num_parallel_calls=auto_tune
+            num_parallel_calls=self._cpu_multi_process_nums
         )
         dataset = dataset.map(
             lambda aug_result, images, images_path, labels:
             {'aug_images': aug_result, 'images': images, 'images_path': images_path, 'labels': labels},
-            num_parallel_calls=auto_tune
+            num_parallel_calls=self._cpu_multi_process_nums
         )
 
         dataset = dataset.padded_batch(
@@ -159,11 +159,7 @@ class DataSet(metaclass=ABCMeta):
             },
             drop_remainder=True
         )
-
-        # repeat num epochs
-        dataset = dataset.repeat(self._epoch_nums)
-
-        dataset = dataset.prefetch(auto_tune)
+        dataset = dataset.prefetch(self._prefetch_size)
 
         iterator = dataset.make_one_shot_iterator()
 
