@@ -24,12 +24,12 @@ AUG:
         SATURATION_JITTER_RATIO: 0.5
 DATASET:
     DATASET_NAME: 'ilsvrc_2012'
-    DATA_DIR: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012'
+    DATA_DIR: './data/ilsvrc_2012_dataset'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
     NUM_CLASSES: 935
-    TEST_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/test.txt'
-    TRAIN_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/train.txt'
-    VAL_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/val.txt'
+    TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
+    TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
+    VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
     MEAN_VALUE: [104.00698793, 116.66876762, 122.67891434]
@@ -38,14 +38,14 @@ FREEZE:
     MODEL_FILENAME: 'model'
     PARAMS_FILENAME: 'params'
 MODEL:
-    MODEL_NAME: 'vgg'
-    VGG:
-        NET_SIZE: 16
+    MODEL_NAME: 'repvgg'
+    REPVGG:
+        NET_FLAG: 'a0'
 TEST:
     TEST_MODEL: 'model/vgg/final'
 TRAIN:
-    MODEL_SAVE_DIR: 'model/vgg_ilsvrc_2012/'
-    TBOARD_SAVE_DIR: 'tboard/vgg_ilsvrc_2012/'
+    MODEL_SAVE_DIR: 'model/repvgg_ilsvrc_2012/'
+    TBOARD_SAVE_DIR: 'tboard/repvgg_ilsvrc_2012/'
     MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
         ENABLE: False
