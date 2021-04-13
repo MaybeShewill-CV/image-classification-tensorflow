@@ -24,12 +24,12 @@ AUG:
         SATURATION_JITTER_RATIO: 0.5
 DATASET:
     DATASET_NAME: 'ilsvrc_2012'
-    DATA_DIR: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012'
+    DATA_DIR: './data/ilsvrc_2012_dataset'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
     NUM_CLASSES: 935
-    TEST_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/test.txt'
-    TRAIN_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/train.txt'
-    VAL_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC2012/image_file_index/val.txt'
+    TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
+    TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
+    VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
     MEAN_VALUE: [104.00698793, 116.66876762, 122.67891434]
@@ -38,20 +38,20 @@ FREEZE:
     MODEL_FILENAME: 'model'
     PARAMS_FILENAME: 'params'
 MODEL:
-    MODEL_NAME: 'resnet'
-    RESNET:
-        NET_SIZE: 18
+    MODEL_NAME: 'vgg'
+    VGG:
+        NET_SIZE: 16
 TEST:
-    TEST_MODEL: 'model/resnet/final'
+    TEST_MODEL: 'model/vgg/final'
 TRAIN:
-    MODEL_SAVE_DIR: 'model/resnet_ilsvrc_2012/'
-    TBOARD_SAVE_DIR: 'tboard/resnet_ilsvrc_2012/'
+    MODEL_SAVE_DIR: 'model/vgg_ilsvrc_2012/'
+    TBOARD_SAVE_DIR: 'tboard/vgg_ilsvrc_2012/'
     MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
         ENABLE: False
         SNAPSHOT_PATH: ''
     SNAPSHOT_EPOCH: 4
-    BATCH_SIZE: 128
+    BATCH_SIZE: 64
     EPOCH_NUMS: 97
     WARM_UP:
         ENABLE: False
@@ -61,10 +61,10 @@ TRAIN:
     FAST_DATA_PROVIDER:
         ENABLE: True
         MULTI_PROCESSOR_NUMS: 8
-        SHUFFLE_BUFFER_SIZE: 2048
-        PREFETCH_SIZE: 8192
+        SHUFFLE_BUFFER_SIZE: 512
+        PREFETCH_SIZE: 512
 SOLVER:
-    LR: 0.045
+    LR: 0.01
     LR_POLICY: 'poly'
     LR_POLYNOMIAL_POWER: 0.95
     OPTIMIZER: 'sgd'
