@@ -64,9 +64,14 @@ class DataSet(metaclass=ABCMeta):
 
         :return:
         """
-        sample_counts = 0
-        for tfrecord_path in self._tfrecord_file_paths:
-            sample_counts += sum(1 for _ in tf.python_io.tf_record_iterator(tfrecord_path))
+        if self._dataset_flag == 'train':
+            sample_counts = len(open(self._cfg.DATASET.TRAIN_FILE_LIST).readlines())
+        elif self._dataset_flag == 'val':
+            sample_counts = len(open(self._cfg.DATASET.VAL_FILE_LIST).readlines())
+        elif self._dataset_flag == 'test':
+            sample_counts = len(open(self._cfg.DATASET.TEST_FILE_LIST).readlines())
+        else:
+            raise ValueError('Unsupported dataset flag: {:s}'.format(self._dataset_flag))
 
         return sample_counts
 
