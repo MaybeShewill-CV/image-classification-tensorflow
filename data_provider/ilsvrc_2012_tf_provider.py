@@ -3,13 +3,14 @@
 # @Time    : 2019/12/12 下午3:09
 # @Author  : MaybeShewill-CV
 # @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
-# @File    : ilsvrc_2012_tf_provider.py
+# @File    : ilsvrc_2012_tf_provider_v1.py
 # @IDE: PyCharm
 """
 ilsvrc dataset reader
 """
 import time
 import os.path as ops
+import glob
 
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -34,24 +35,17 @@ class IlsvrcDatasetTfProvider(base_dataset_tf_provider.DataSetProvider):
 
         :return:
         """
+        tfrecords_dir = ops.join(self._dataset_dir, 'tfrecords')
+        if not ops.exists(tfrecords_dir):
+            return
 
-        with open(self._train_image_index_file_path, 'r') as file:
-            for line in file:
-                info = line.rstrip('\r').rstrip('\n').strip(' ').split()
-                train_src_image_path = info[0]
-                label_id = info[1]
-                assert ops.exists(train_src_image_path), '{:s} not exist'.format(train_src_image_path)
+        self._train_label_image_infos = glob.glob('{:s}/{:s}_train*.tfrecords'.format(
+            tfrecords_dir, self._cfg.DATASET.DATASET_NAME)
+        )
+        self._val_label_image_infos = glob.glob('{:s}/{:s}_val*.tfrecords'.format(
+            tfrecords_dir, self._cfg.DATASET.DATASET_NAME)
+        )
 
-                self._train_label_image_infos.append([train_src_image_path, label_id])
-
-        with open(self._val_image_index_file_path, 'r') as file:
-            for line in file:
-                info = line.rstrip('\r').rstrip('\n').strip(' ').split()
-                val_src_image_path = info[0]
-                val_label_id = info[1]
-                assert ops.exists(val_src_image_path), '{:s} not exist'.format(val_src_image_path)
-
-                self._val_label_image_infos.append([val_src_image_path, val_label_id])
         return
 
 
@@ -95,7 +89,7 @@ def _test():
                 aug_image_recover = np.array((aug_images_value[0] + 1.0) * 127.5, dtype=np.uint8)
                 src_image = np.array(src_images_value[0], dtype=np.uint8)
 
-                # print(image_paths_value[0].decode('utf-8'))
+                print(image_paths_value[0].decode('utf-8'))
                 # print(labels_value[0])
                 # plt.figure('src')
                 # plt.imshow(src_image)
