@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 
 
-def _resize(img, cfg, mode='train'):
+def resize(img, cfg, mode='train'):
     """
     resize image
     :param img:
@@ -423,7 +423,7 @@ def preprocess_image(src_image, cfg):
     :return:
     """
     # resize image
-    src_image = _resize(src_image, cfg=cfg)
+    src_image = resize(src_image, cfg=cfg)
     # random flip
     src_image = _random_flip_image(src_image, cfg=cfg)
     # random mirror
