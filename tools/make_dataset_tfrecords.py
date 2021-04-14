@@ -143,7 +143,7 @@ def _make_dataset_tf_records(cfg, save_dir, dataset_flag='train', split_ratio=No
             )
             tfrecords_output_path = ops.join(save_dir, tfrecords_output_name)
 
-            with tf.python_io.TFRecordWriter(tfrecords_output_path) as writer:
+            with tf.io.TFRecordWriter(tfrecords_output_path) as writer:
                 for example_index, example_info in enumerate(example_infos):
                     t_start = time.time()
                     src_image_path = example_info[0]
@@ -204,8 +204,8 @@ def main():
     LOG.info('Start generate val dataset tfrecords for {:s}'.format(dataset_name))
     _make_dataset_tf_records(cfg=cfg, save_dir=tfrecords_save_dir, dataset_flag='val', split_ratio=10000)
 
-    # LOG.info('Start generate train dataset tfrecords for {:s}'.format(dataset_name))
-    # _make_dataset_tf_records(cfg=cfg, save_dir=tfrecords_save_dir, dataset_flag='train', split_ratio=50000)
+    LOG.info('Start generate train dataset tfrecords for {:s}'.format(dataset_name))
+    _make_dataset_tf_records(cfg=cfg, save_dir=tfrecords_save_dir, dataset_flag='train', split_ratio=50000)
 
     return
 
