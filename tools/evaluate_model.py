@@ -239,6 +239,7 @@ def evaluate():
                 # input_image = cv2.blur(input_image, (3, 3))
                 # input_image = cv2.GaussianBlur(input_image, (3, 3), 1.0)
                 input_image = cv2.resize(input_image, tuple(cfg.AUG.EVAL_CROP_SIZE), interpolation=cv2.INTER_LINEAR)
+                input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
                 input_image = input_image.astype(np.float32)
                 input_image = input_image / 127.5 - 1.0
                 input_images.append(input_image)
