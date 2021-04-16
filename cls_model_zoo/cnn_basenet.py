@@ -26,7 +26,7 @@ class CNNBaseModel(metaclass=ABCMeta):
     @staticmethod
     def conv2d(inputdata, out_channel, kernel_size, padding='SAME',
                stride=1, w_init=None, b_init=None,
-               split=1, use_bias=True, data_format='NHWC', name=None):
+               split=1, use_bias=True, data_format='NHWC', name=None, dilations=1):
         """
         Packing the tensorflow conv2d function.
         :param name: op name
@@ -78,11 +78,11 @@ class CNNBaseModel(metaclass=ABCMeta):
                 b = tf.get_variable('b', [out_channel], initializer=b_init)
 
             if split == 1:
-                conv = tf.nn.conv2d(inputdata, w, strides, padding, data_format=data_format)
+                conv = tf.nn.conv2d(inputdata, w, strides, padding, data_format=data_format, dilations=dilations)
             else:
                 inputs = tf.split(inputdata, split, channel_axis)
                 kernels = tf.split(w, split, 3)
-                outputs = [tf.nn.conv2d(i, k, strides, padding, data_format=data_format)
+                outputs = [tf.nn.conv2d(i, k, strides, padding, data_format=data_format, dilations=dilations)
                            for i, k in zip(inputs, kernels)]
                 conv = tf.concat(outputs, channel_axis)
 
