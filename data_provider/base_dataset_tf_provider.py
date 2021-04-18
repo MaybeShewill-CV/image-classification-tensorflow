@@ -140,7 +140,7 @@ class DataSet(metaclass=ABCMeta):
             {'aug_images': aug_result, 'images': images, 'images_path': images_path, 'labels': labels},
             num_parallel_calls=self._cpu_multi_process_nums
         )
-        dataset.shuffle(self._shuffle_buffer_size)
+        dataset = dataset.shuffle(self._shuffle_buffer_size)
 
         dataset = dataset.padded_batch(
             batch_size=self._batch_size,
