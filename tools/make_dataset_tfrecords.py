@@ -205,7 +205,7 @@ def main():
     _make_dataset_tf_records(cfg=cfg, save_dir=tfrecords_save_dir, dataset_flag='val', split_ratio=10000)
 
     LOG.info('Start generate train dataset tfrecords for {:s}'.format(dataset_name))
-    _make_dataset_tf_records(cfg=cfg, save_dir=tfrecords_save_dir, dataset_flag='train', split_ratio=50000)
+    _make_dataset_tf_records(cfg=cfg, save_dir=tfrecords_save_dir, dataset_flag='train', split_ratio=10000)
 
     return
 
