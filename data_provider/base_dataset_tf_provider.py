@@ -158,7 +158,7 @@ class DataSet(metaclass=ABCMeta):
             },
             drop_remainder=True
         )
-        dataset = dataset.repeat(self._epoch_nums)
+        dataset = dataset.repeat()
         dataset = dataset.prefetch(self._prefetch_size)
 
         iterator = dataset.make_one_shot_iterator()
