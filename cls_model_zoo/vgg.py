@@ -141,7 +141,10 @@ class Vgg(cnn_basenet.CNNBaseModel):
                     conv_nums=conv_nums,
                     name=block_name
                 )
-
+            output = self.globalavgpooling(
+                inputdata=output,
+                name='global_average_pooling'
+            )
             output = self.fullyconnect(
                 inputdata=output,
                 out_dim=4096,
