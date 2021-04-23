@@ -143,7 +143,16 @@ class Vgg(cnn_basenet.CNNBaseModel):
                 )
             output = self.globalavgpooling(
                 inputdata=output,
-                name='global_average_pooling'
+                name='global_average_pooling',
+                keepdims=True
+            )
+            output = self._conv_stage(
+                input_tensor=output,
+                k_size=1,
+                out_dims=2048,
+                name='fc_conv',
+                stride=1,
+                need_layer_norm=True
             )
             output = self.fullyconnect(
                 inputdata=output,
