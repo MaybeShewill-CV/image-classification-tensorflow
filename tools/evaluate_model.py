@@ -44,6 +44,7 @@ def init_args():
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--need_shuffle', type=args_str2bool, default=True)
     parser.add_argument('--plot_precision_recall_curve', type=args_str2bool, default=False)
+    parser.add_argument('--need_details_report', type=args_str2bool, default=False)
 
     return parser.parse_args()
 
@@ -259,16 +260,17 @@ def evaluate():
             predicted_score.extend(score_values)
             pbar_input_batches.set_description('Cost time: {:.4f}s'.format(t_cost))
 
-        # print prediction report
-        LOG.info(
-            '{:s} {:s} classification_report(left: labels):'.format(cfg.DATASET.DATASET_NAME, cfg.MODEL.MODEL_NAME)
-        )
-        LOG.info(classification_report(gt_labels, predicted_result))
-
         # calculate evaluate statics
         calculate_evaluate_statics(labels=gt_labels, predictions=predicted_result, model_name='{:s}_{:s}'.format(
             cfg.DATASET.DATASET_NAME, cfg.MODEL.MODEL_NAME
         ))
+
+        # print prediction report
+        if args.need_details_report:
+            LOG.info(
+                '{:s} {:s} classification_report(left: labels):'.format(cfg.DATASET.DATASET_NAME, cfg.MODEL.MODEL_NAME)
+            )
+            LOG.info(classification_report(gt_labels, predicted_result))
 
         # plot precision recall curve
         if args.plot_precision_recall_curve:
