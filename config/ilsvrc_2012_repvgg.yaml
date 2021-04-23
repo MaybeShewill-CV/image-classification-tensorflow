@@ -26,7 +26,7 @@ DATASET:
     DATASET_NAME: 'ilsvrc_2012'
     DATA_DIR: './data/ilsvrc_2012_dataset'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
-    NUM_CLASSES: 935
+    NUM_CLASSES: 1000
     TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
     TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
     VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
