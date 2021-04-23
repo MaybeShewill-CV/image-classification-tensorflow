@@ -43,6 +43,7 @@ def init_args():
     parser.add_argument('--dataset_flag', type=str, default='val')
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--need_shuffle', type=args_str2bool, default=True)
+    parser.add_argument('--plot_precision_recall_curve', type=args_str2bool, default=False)
 
     return parser.parse_args()
 
@@ -270,13 +271,14 @@ def evaluate():
         ))
 
         # plot precision recall curve
-        enc = OneHotEncoder(handle_unknown='ignore')
-        plot_precision_recall_curve(
-            labels=enc.fit_transform(np.array(gt_labels).reshape((-1, 1))).toarray(),
-            predictions_prob=predicted_score,
-            class_nums=cfg.DATASET.NUM_CLASSES
-        )
-        plt.show()
+        if args.plot_precision_recall_curve:
+            enc = OneHotEncoder(handle_unknown='ignore')
+            plot_precision_recall_curve(
+                labels=enc.fit_transform(np.array(gt_labels).reshape((-1, 1))).toarray(),
+                predictions_prob=predicted_score,
+                class_nums=cfg.DATASET.NUM_CLASSES
+            )
+            plt.show()
 
     return
 
