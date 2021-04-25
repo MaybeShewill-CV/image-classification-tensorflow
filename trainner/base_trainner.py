@@ -21,6 +21,7 @@ import tqdm
 
 import cls_model_zoo
 import data_provider
+from trainner import lr_scheduler
 
 LOG = loguru.logger
 
@@ -41,6 +42,7 @@ class BaseClsTrainner(object):
         LOG.info('Start initializing {:s} trainner for {:s}'.format(self._model_name, self._dataset_name))
 
         self._dataset_reader = data_provider.get_dataset_provider(cfg=cfg)
+        self._lr_scheduler = lr_scheduler.LrScheduler(cfg=self._cfg)
         self._train_dataset = self._dataset_reader.train_dataset
         self._val_dataset = self._dataset_reader.val_dataset
         self._steps_per_epoch = len(self._train_dataset)
@@ -52,7 +54,6 @@ class BaseClsTrainner(object):
         self._model_save_dir = self._cfg.TRAIN.MODEL_SAVE_DIR
         self._snapshot_epoch = self._cfg.TRAIN.SNAPSHOT_EPOCH
         self._input_tensor_size = self._cfg.AUG.TRAIN_CROP_SIZE
-        self._lr_polynimal_decay_power = self._cfg.SOLVER.LR_POLYNOMIAL_POWER
         self._optimizer_mode = self._cfg.SOLVER.OPTIMIZER.lower()
         self._tboard_save_dir = self._cfg.TRAIN.TBOARD_SAVE_DIR
         if self._cfg.TRAIN.RESTORE_FROM_SNAPSHOT.ENABLE:
@@ -141,13 +142,7 @@ class BaseClsTrainner(object):
             self._learn_rate = tf.cond(
                 pred=self._global_step < warmup_steps,
                 true_fn=lambda: self._global_step / warmup_steps * self._init_learning_rate,
-                false_fn=lambda: tf.train.polynomial_decay(
-                    learning_rate=self._init_learning_rate,
-                    global_step=self._global_step,
-                    decay_steps=train_steps,
-                    end_learning_rate=0.000001,
-                    power=self._lr_polynimal_decay_power
-                )
+                false_fn=lambda: self._lr_scheduler(global_step=self._global_step, decay_steps=train_steps)
             )
             global_step_update = tf.assign_add(self._global_step, 1.0)
             val_global_step_update = tf.assign_add(self._val_global_step, 1.0)

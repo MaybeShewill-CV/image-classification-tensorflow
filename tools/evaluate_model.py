@@ -244,7 +244,11 @@ def evaluate():
                 input_image = input_image[16:16 + 224, 16:16 + 224, :]
                 input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
                 input_image = input_image.astype(np.float32)
-                input_image = input_image / 127.5 - 1.0
+                # input_image = input_image / 127.5 - 1.0
+                mean_value = np.array(cfg.DATASET.MEAN_VALUE).reshape((1, 1, len(cfg.DATASET.MEAN_VALUE)))
+                std_value = np.array(cfg.DATASET.STD_VALUE).reshape((1, 1, len(cfg.DATASET.STD_VALUE)))
+                input_image -= mean_value
+                input_image /= std_value
                 input_images.append(input_image)
 
             t_start = time.time()

@@ -9,6 +9,7 @@
 Tensorflow version image data augmentation tools
 """
 import tensorflow as tf
+import numpy as np
 
 from local_utils import config_utils
 
@@ -385,19 +386,19 @@ def normalize_image(img, cfg=None):
     :param cfg:
     :return:
     """
-    image = tf.divide(img, tf.constant(127.5)) - 1.0
-    # img_mean = tf.convert_to_tensor(
-    #     np.array(cfg.DATASET.MEAN_VALUE).reshape((1, 1, len(cfg.DATASET.MEAN_VALUE))),
-    #     dtype=tf.float32
-    # )
-    # img_std = tf.convert_to_tensor(
-    #     np.array(cfg.DATASET.STD_VALUE).reshape((1, 1, len(cfg.DATASET.STD_VALUE))),
-    #     dtype=tf.float32
-    # )
-    # img -= img_mean
-    # img /= img_std
+    # img = tf.divide(img, tf.constant(127.5)) - 1.0
+    img_mean = tf.convert_to_tensor(
+        np.array(cfg.DATASET.MEAN_VALUE).reshape((1, 1, len(cfg.DATASET.MEAN_VALUE))),
+        dtype=tf.float32
+    )
+    img_std = tf.convert_to_tensor(
+        np.array(cfg.DATASET.STD_VALUE).reshape((1, 1, len(cfg.DATASET.STD_VALUE))),
+        dtype=tf.float32
+    )
+    img -= img_mean
+    img /= img_std
 
-    return image
+    return img
 
 
 def preprocess_image(src_image, cfg):

@@ -32,7 +32,8 @@ DATASET:
     VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
-    MEAN_VALUE: [104.00698793, 116.66876762, 122.67891434]
+    MEAN_VALUE: [123.68, 116.779, 103.939]
+    STD_VALUE: [58.393, 57.12, 57.375]
     USE_ONE_HOT_LABEL: False
 FREEZE:
     MODEL_FILENAME: 'model'
@@ -53,7 +54,7 @@ TRAIN:
         SNAPSHOT_PATH: ''
     SNAPSHOT_EPOCH: 4
     BATCH_SIZE: 32
-    EPOCH_NUMS: 65
+    EPOCH_NUMS: 129
     WARM_UP:
         ENABLE: True
         EPOCH_NUMS: 4
@@ -61,8 +62,8 @@ TRAIN:
         ENABLE: False
     FAST_DATA_PROVIDER:
         ENABLE: True
-        MULTI_PROCESSOR_NUMS: 8
-        SHUFFLE_BUFFER_SIZE: 256
+        MULTI_PROCESSOR_NUMS: 6
+        SHUFFLE_BUFFER_SIZE: 512
         PREFETCH_SIZE: 16
 SOLVER:
     LR: 0.045

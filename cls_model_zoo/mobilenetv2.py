@@ -206,19 +206,15 @@ class MobileNetV2(cnn_basenet.CNNBaseModel):
                 use_bias=False,
                 need_activate=True
             )
-            # avg pool
-            output_tensor = tf.reduce_mean(output_tensor, axis=[1, 2], keepdims=True, name='global_avg_pool')
-            # output logits
-            output_tensor = self._conv_block(
-                input_tensor=output_tensor,
-                k_size=1,
-                output_channels=self._class_nums,
-                stride=1,
-                name='conv_logits',
-                use_bias=False,
-                need_activate=False
+            output_tensor = self.globalavgpooling(
+                inputdata=output_tensor,
+                name='global_average_pooling'
             )
-            output_tensor = tf.squeeze(output_tensor, axis=[1, 2], name='logits')
+            output_tensor = self.fullyconnect(
+                inputdata=output_tensor,
+                out_dim=self._class_nums,
+                name='final_logits'
+            )
         return output_tensor
 
     def inference(self, input_tensor, name, reuse=False):

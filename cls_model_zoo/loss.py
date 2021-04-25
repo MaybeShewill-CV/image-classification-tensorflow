@@ -52,7 +52,7 @@ def dice_bce_loss(logits, label_tensor, weight_decay, l2_vars, **kwargs):
     # compute l2 loss
     l2_reg_loss = tf.constant(0.0, tf.float32)
     for vv in l2_vars:
-        if 'beta' in vv.name or 'gamma' in vv.name:
+        if 'beta' in vv.name or 'gamma' in vv.name or 'bias' in vv.name:
             continue
         else:
             l2_reg_loss = tf.add(l2_reg_loss, tf.nn.l2_loss(vv))
@@ -87,7 +87,7 @@ def cross_entropy_loss(logits, label_tensor, weight_decay, l2_vars):
     cross_entropy_loss_value = tf.reduce_mean(cross_entropy, name='cross_entropy')
     l2_reg_loss = tf.constant(0.0, tf.float32)
     for vv in l2_vars:
-        if 'beta' in vv.name or 'gamma' in vv.name:
+        if 'beta' in vv.name or 'gamma' in vv.name or 'bias' in vv.name:
             continue
         else:
             l2_reg_loss = tf.add(l2_reg_loss, tf.nn.l2_loss(vv))

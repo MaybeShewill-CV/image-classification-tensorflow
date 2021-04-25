@@ -179,18 +179,15 @@ class ResNet(resnet_utils.ResnetBase):
             )
             inputs = self.relu(inputdata=inputs, name='relu_after_block_layer')
 
-            inputs = tf.reduce_mean(
-                input_tensor=inputs,
-                axis=[1, 2],
-                keepdims=True,
-                name='final_reduce_mean'
-            )
-            inputs = tf.squeeze(input=inputs, axis=[1, 2], name='final_squeeze')
-
-            final_logits = self.fullyconnect(
+            output_tensor = self.globalavgpooling(
                 inputdata=inputs,
+                name='global_average_pooling'
+            )
+            final_logits = self.fullyconnect(
+                inputdata=output_tensor,
                 out_dim=self._class_nums,
-                use_bias=False, name='final_logits'
+                use_bias=True,
+                name='final_logits'
             )
 
         return final_logits

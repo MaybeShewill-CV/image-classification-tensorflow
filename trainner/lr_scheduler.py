@@ -126,7 +126,6 @@ class _CosineDecay(object):
         return lr
 
 
-
 class LrScheduler(object):
     """
 
