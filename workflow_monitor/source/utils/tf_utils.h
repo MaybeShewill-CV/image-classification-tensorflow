@@ -88,7 +88,7 @@ namespace wf_monitor {
                                            const std::string& checkpoint_model_name) {
             std::ifstream eval_file;
             eval_file.open(eval_log_file_path, std::ios::in);
-            if (!eval_file.open() || !eval_file.good()) {
+            if (!eval_file.is_open() || !eval_file.good()) {
                 LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
                 return false;
             }
@@ -129,7 +129,7 @@ namespace wf_monitor {
 
             std::ifstream eval_file;
             eval_file.open(eval_log_file_path, std::ios::in);
-            if (!eval_file.open() || !eval_file.good()) {
+            if (!eval_file.is_open() || !eval_file.good()) {
                 LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
                 return false;
             }
