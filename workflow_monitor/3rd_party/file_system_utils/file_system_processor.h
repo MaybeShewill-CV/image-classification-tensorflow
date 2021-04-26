@@ -1,6 +1,6 @@
-// Copyright 2014 Baidu Inc. All Rights Reserved.
-// Author: Luo Yao (luoyao@baidu.com)
-// Created by Luo Yao on 18-1-15.
+// Copyright 2021 MaybeShewill-CV. All Rights Reserved.
+// Author: MaybeShewill-CV
+// Created by MaybeShewill-CV on 18-1-15.
 
 // 文件系统处理类
 
