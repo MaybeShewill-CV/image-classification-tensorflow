@@ -1,5 +1,5 @@
-// Copyright 2019 Baidu Inc. All Rights Reserved.
-// Author: Luo Yao (luoyao@baidu.com)
+// Copyright 2021 MaybeShewill-CV All Rights Reserved..
+// Author: MaybeShewill-CV
 // File: tf_utls.h
 // Date: 2021/4/26 下午2:03
 
@@ -78,7 +78,93 @@ namespace wf_monitor {
             return true;
         }
 
+        /***
+         * check if the checkpoint model has been evaluated
+         * @param eval_log_file_path
+         * @param checkpoint_model_name
+         * @return
+         */
+        bool is_checkpoint_model_evaluated(const std::string& eval_log_file_path,
+                                           const std::string& checkpoint_model_name) {
+            std::ifstream eval_file;
+            eval_file.open(eval_log_file_path, std::ios::in);
+            if (!eval_file.open() || !eval_file.good()) {
+                LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
+                return false;
+            }
 
+            std::string record_info;
+            bool model_has_been_evaluated = false;
+            while (std::getline(eval_file, record_info)) {
+                if (record_info.find(checkpoint_model_name) != std::string::npos) {
+                    model_has_been_evaluated = true;
+                    break;
+                }
+            }
+            eval_file.close();
+            return model_has_been_evaluated;
+        }
+
+        /***
+         * get checkpoint model eval statics
+         * @param eval_log_file_path
+         * @param checkpoint_model_name
+         * @param dataset_name
+         * @param dataset_flag
+         * @param image_count
+         * @param precision
+         * @param recall
+         * @param f1
+         * @return
+         */
+        bool get_checkpoint_model_eval_statics(
+                const std::string& eval_log_file_path,
+                const std::string& checkpoint_model_name,
+                std::string& dataset_name,
+                std::string& dataset_flag,
+                int32_t image_count, float_t precision, float_t recall, float_t f1) {
+            if (!is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name)) {
+                return false;
+            }
+
+            std::ifstream eval_file;
+            eval_file.open(eval_log_file_path, std::ios::in);
+            if (!eval_file.open() || !eval_file.good()) {
+                LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
+                return false;
+            }
+
+            std::string record_info;
+            while (std::getline(eval_file, record_info)) {
+                if (record_info.find(checkpoint_model_name) != std::string::npos) {
+                    std::string tmp_info;
+                    // read dataset name
+                    std::getline(eval_file, tmp_info);
+                    dataset_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    // read dataset flag
+                    std::getline(eval_file, tmp_info);
+                    dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    // read dataset image count
+                    std::getline(eval_file, tmp_info);
+                    image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    // read model name
+                    std::getline(eval_file, tmp_info);
+                    std::string model_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    // read model precision
+                    std::getline(eval_file, tmp_info);
+                    precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    // read model recall
+                    std::getline(eval_file, tmp_info);
+                    recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    // read model f1
+                    std::getline(eval_file, tmp_info);
+                    f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    break;
+                }
+            }
+            eval_file.close()
+            return true;
+        }
     }
 }
 

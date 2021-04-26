@@ -1,6 +1,6 @@
 /************************************************
-* Copyright 2019 Baidu Inc. All Rights Reserved.
-* Author: Luo Yao (luoyao@baidu.com)
+* Copyright 2021 MaybeShewill-CV All Rights Reserved..
+* Author: MaybeShewill-CV
 * File: md5.cpp
 * Date: 2020/12/4 下午9:34
 ************************************************/

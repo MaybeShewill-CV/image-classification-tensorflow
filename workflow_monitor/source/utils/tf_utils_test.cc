@@ -1,5 +1,5 @@
-// Copyright 2019 Baidu Inc. All Rights Reserved.
-// Author: Luo Yao (luoyao@baidu.com)
+// Copyright 2021 MaybeShewill-CV All Rights Reserved..
+// Author: MaybeShewill-CV
 // File: tf_utils_test.cc.c
 // Date: 2021/4/26 下午2:35
 
