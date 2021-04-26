@@ -146,23 +146,23 @@ namespace wf_monitor {
                     dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 1);
                     // read dataset image count
                     std::getline(eval_file, tmp_info);
-                    image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     // read model name
                     std::getline(eval_file, tmp_info);
                     std::string model_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
                     // read model precision
                     std::getline(eval_file, tmp_info);
-                    precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     // read model recall
                     std::getline(eval_file, tmp_info);
-                    recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     // read model f1
                     std::getline(eval_file, tmp_info);
-                    f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1));
+                    f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     break;
                 }
             }
-            eval_file.close()
+            eval_file.close();
             return true;
         }
     }
