@@ -210,7 +210,14 @@ namespace wf_monitor {
             std::string latested_training_log_info;
             std::getline(train_log_file, latested_training_log_info);
 
-            if (latested_training_log_info.find(""))
+            if (latested_training_log_info.find("INFO => Epoch:") == std::string::npos) {
+                *epoch = 0;
+                *train_loss = 0.0;
+                *test_loss = 0.0;
+                *train_acc = 0.0;
+                *test_loss = 0.0;
+                return false;
+            }
 
             std::string epoch_flag = "Epoch:";
             std::string time_flag = "Time:";
@@ -253,7 +260,150 @@ namespace wf_monitor {
             *test_loss = std::atof(test_loss_str.c_str());
             *train_acc = std::atof(train_acc_str.c_str());
             *test_acc = std::atof(test_acc_str.c_str());
-         }
+            return true;
+        }
+
+        /***
+         * judge if the training process is alive
+         * @return
+         */
+        bool is_net_training_process_alive() {
+            FILE* fp = nullptr;
+            int count = 1;
+            int buf_size = 100;
+            char buf[buf_size];
+            char command[150];
+
+            sprintf(command, "ps -ef | grep -w %s | wc -l", "train_model.py");
+
+            if ((fp = popen(command, "r")) == nullptr) {
+                LOG(ERROR) << "popen err";
+                return false;
+            }
+            if ((fgets(buf, buf_size, fp))!= NULL) {
+                count = atoi(buf);
+            }
+            pclose(fp);
+            fp = nullptr;
+            if (count <= 1) {
+                LOG(INFO) << "No active training process";
+                return false;
+            } else {
+                return true;
+            }
+        }
+
+        /***
+         * get model's name which is been training now
+         * @return
+         */
+        bool get_training_model_name(std::string& model_name) {
+            if (!is_net_training_process_alive()) {
+                LOG(INFO) << "Get training model name failed";
+                model_name = "";
+                return false;
+            }
+
+            char buf_ps[1024];
+            char ps[1024]={0};
+            FILE *ptr = nullptr;
+            char command[150];
+            char result[1024];
+            sprintf(command, "ps -ef | grep -w \"%s\"", "train_model.py --net");
+            std::strcpy(ps, cmd);
+            if ((ptr=popen(ps, "r")) != nullptr) {
+                while (fgets(buf_ps, 1024, ptr) != nullptr) {
+                    std::strcat(result, buf_ps);
+                    if (std::strlen(result) > 1024)
+                        break;
+                }
+                pclose(ptr);
+                ptr = nullptr;
+            } else {
+                LOG(ERROR) << "popen " << command << ", err";
+                LOG(INFO) << "Get training model name failed";
+                model_name = "";
+                return false;
+            }
+
+            std::string result_str(result);
+            auto start_idx = result_str.find("--net") + 6;
+            auto end_idx = result_str.find("--dataset") - 1;
+            model_name = result_str.substr(start_idx, end_idx - start_idx);
+            return true;
+        }
+
+        /***
+         * get dataset's name which is been training now
+         * @return
+         */
+        bool get_training_dataset_name(std::string& dataset_name) {
+            if (!is_net_training_process_alive()) {
+                LOG(INFO) << "Get training dataset name failed";
+                dataset_name = "";
+                return false;
+            }
+
+            char buf_ps[1024];
+            char ps[1024]={0};
+            FILE *ptr = nullptr;
+            char command[150];
+            char result[1024];
+            sprintf(command, "ps -ef | grep -w \"%s\"", "train_model.py --net");
+            std::strcpy(ps, cmd);
+            if ((ptr=popen(ps, "r")) != nullptr) {
+                while (fgets(buf_ps, 1024, ptr) != nullptr) {
+                    std::strcat(result, buf_ps);
+                    if (std::strlen(result) > 1024)
+                        break;
+                }
+                pclose(ptr);
+                ptr = nullptr;
+            } else {
+                LOG(ERROR) << "popen " << command << ", err";
+                LOG(INFO) << "Get training dataset name failed";
+                dataset_name = "";
+                return false;
+            }
+
+            std::string result_str(result);
+            auto start_idx = result_str.find("--dataset") + 10;
+            auto end_idx = result_str.size() - 1;
+            dataset_name = result_str.substr(start_idx, end_idx - start_idx);
+            return true;
+        }
+
+        /***
+         * get checkpoint mode save dir
+         * @param project_base_dir
+         * @return
+         */
+        bool get_checkpoint_model_save_dir(const std::string& project_base_dir, std::string& model_save_dir) {
+            std::string model_name;
+            if (!get_training_model_name(model_name)) {
+                LOG(INFO) << "Get model save dir failed";
+                model_save_dir = ""
+                return false;
+            }
+
+            std::string dataset_name;
+            if (!get_training_dataset_name(dataset_name)) {
+                LOG(INFO) << "Get model save dir failed";
+                model_save_dir = ""
+                return false;
+            }
+
+            char model_save_dir_name[256];
+            sprintf(model_save_dir_name, "%s_%s", model_name.c_str(), dataset_name.c_str());
+            std::string model_root_dir = FileSystemProcessor::combine_path(project_base_dir, "model");
+            model_save_dir = FileSystemProcessor::combine_path(model_root_dir, std::string(model_save_dir_name));
+            if (!FileSystemProcessor::is_directory_exist(model_save_dir)) {
+                LOG(ERROR) << "Model save dir: " << model_save_dir << ", not exist";
+                model_save_dir = "";
+                return false;
+            }
+            return true;
+        }
     }
 }
 
