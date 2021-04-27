@@ -210,6 +210,8 @@ namespace wf_monitor {
             std::string latested_training_log_info;
             std::getline(train_log_file, latested_training_log_info);
 
+            if (latested_training_log_info.find(""))
+
             std::string epoch_flag = "Epoch:";
             std::string time_flag = "Time:";
             std::string train_loss_flag = "Train loss:";
