@@ -99,4 +99,5 @@ target_link_libraries(
 )
 
 if (WF_MONITOR_BUILD_TEST)
-    FILE(GLOB_RECURSE WF_MONITOR_TEST_SRC ${CMAKE_CURRENT_LIST_DIR}/3rd_party/*cc)
+    FILE(GLOB_RECURSE WF_MONITOR_TEST_SRC ${CMAKE_CURRENT_LIST_DIR}/source/utils/*cc)
+endif()
