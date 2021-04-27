@@ -12,7 +12,6 @@
 #include "source/utils/tf_utils.h"
 
 int main() {
-
     WFHttpServer server([](WFHttpTask *task) {
         task->get_resp()->append_output_body("<html>Hello World!</html>");
     });

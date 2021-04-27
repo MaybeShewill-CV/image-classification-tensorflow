@@ -7,9 +7,11 @@
 #define WORKFLOW_MONITOR_TF_UTLS_H
 
 #include <string>
-#include <iostream>
+#include <fstream>
+#include <algorithm>
 
-#include <glog//logging.h>
+#include <glog/logging.h>
+#include <boost/lexical_cast.hpp>
 
 #include "file_system_utils//file_system_processor.h"
 
@@ -38,7 +40,7 @@ namespace wf_monitor {
             }
             // read lasted checkpoint model name from checkpoint file
             std::ifstream checkpoint_file;
-            checkpoint_file.open(check_point_record_file_path, std::ios::in);
+            checkpoint_file.open(check_point_record_file_path, std::fstream::in);
             if (!checkpoint_file.is_open() || !checkpoint_file.good()) {
                 LOG(ERROR) << "Open checkpoint file: " << check_point_record_file_path << " failed";
                 return false;
@@ -87,7 +89,7 @@ namespace wf_monitor {
         bool is_checkpoint_model_evaluated(const std::string& eval_log_file_path,
                                            const std::string& checkpoint_model_name) {
             std::ifstream eval_file;
-            eval_file.open(eval_log_file_path, std::ios::in);
+            eval_file.open(eval_log_file_path, std::fstream::in);
             if (!eval_file.is_open() || !eval_file.good()) {
                 LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
                 return false;
@@ -128,7 +130,7 @@ namespace wf_monitor {
             }
 
             std::ifstream eval_file;
-            eval_file.open(eval_log_file_path, std::ios::in);
+            eval_file.open(eval_log_file_path, std::fstream::in);
             if (!eval_file.is_open() || !eval_file.good()) {
                 LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
                 return false;
@@ -165,6 +167,91 @@ namespace wf_monitor {
             eval_file.close();
             return true;
         }
+
+        /***
+         * Get training status
+         * @param trainning_log_file_path
+         * @param epoch
+         * @param train_loss
+         * @param test_loss
+         * @param train_acc
+         * @param test_acc
+         * @return
+         */
+        bool get_training_status(
+                const std::string& trainning_log_file_path,
+                int* epoch, float* train_loss, float* test_loss, float* train_acc, float* test_acc) {
+
+            if (!FileSystemProcessor::is_file_exist(trainning_log_file_path)) {
+                LOG(ERROR) << "Training log file: " << trainning_log_file_path << ", not exist";
+                return false;
+            }
+
+            std::ifstream train_log_file;
+            train_log_file.open(trainning_log_file_path, std::fstream::in);
+            if (!train_log_file.is_open() || !train_log_file.good()) {
+                LOG(ERROR) << "Open training log file: " << trainning_log_file_path << ", failed";
+                return false;
+            }
+
+            train_log_file.seekg(-1, std::ios_base::end);
+            if(train_log_file.peek() == '\n') {
+                train_log_file.seekg(-1, std::ios_base::cur);
+                int i = train_log_file.tellg();
+                for (i; i > 0; i--) {
+                    if (train_log_file.peek() == '\n') {
+                        //Found
+                        train_log_file.get();
+                        break;
+                    }
+                    train_log_file.seekg(i, std::ios_base::beg);
+                }
+            }
+            std::string latested_training_log_info;
+            std::getline(train_log_file, latested_training_log_info);
+
+            std::string epoch_flag = "Epoch:";
+            std::string time_flag = "Time:";
+            std::string train_loss_flag = "Train loss:";
+            std::string test_loss_flag = "Test loss:";
+            std::string train_acc_flag = "Train acc:";
+            std::string test_acc_flag = "Test acc:";
+            std::string end_flag = "...";
+
+            auto epoch_idx = latested_training_log_info.find(epoch_flag);
+            auto time_idx = latested_training_log_info.find(time_flag);
+            auto train_loss_idx = latested_training_log_info.find(train_loss_flag);
+            auto test_loss_idx = latested_training_log_info.find(test_loss_flag);
+            auto train_acc_idx = latested_training_log_info.find(train_acc_flag);
+            auto test_acc_idx = latested_training_log_info.find(test_acc_flag);
+            auto end_idx = latested_training_log_info.find(end_flag);
+
+            auto epoch_str = latested_training_log_info.substr(
+                    epoch_idx + epoch_flag.size() + 1, time_idx - epoch_idx - epoch_flag.size() - 1
+                    );
+            auto train_loss_str = latested_training_log_info.substr(
+                    train_loss_idx + train_loss_flag.size() + 1,
+                    test_loss_idx - train_loss_idx - train_loss_flag.size() - 1
+                    );
+            auto test_loss_str = latested_training_log_info.substr(
+                    test_loss_idx + test_loss_flag.size() + 1,
+                    train_acc_idx - test_loss_idx - test_loss_flag.size() - 1
+                    );
+            auto train_acc_str = latested_training_log_info.substr(
+                    train_acc_idx + train_acc_flag.size() + 1,
+                    test_acc_idx - train_acc_idx - train_acc_flag.size() - 1
+                    );
+            auto test_acc_str = latested_training_log_info.substr(
+                    test_acc_idx + test_acc_flag.size() + 1,
+                    end_idx - test_acc_idx - test_acc_flag.size() - 1
+                    );
+
+            *epoch = std::atoi(epoch_str.c_str());
+            *train_loss = std::atof(train_loss_str.c_str());
+            *test_loss = std::atof(test_loss_str.c_str());
+            *train_acc = std::atof(train_acc_str.c_str());
+            *test_acc = std::atof(test_acc_str.c_str());
+         }
     }
 }
 
