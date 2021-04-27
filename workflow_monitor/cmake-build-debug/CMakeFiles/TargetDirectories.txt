@@ -1,3 +1,0 @@
-/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/workflow_monitor/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/workflow_monitor/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/workflow_monitor/cmake-build-debug/CMakeFiles/workflow_monitor.out.dir
