@@ -151,7 +151,7 @@ namespace wf_monitor {
                     dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 1);
                     // read dataset image count
                     std::getline(eval_file, tmp_info);
-                    *image_count = std::strtol(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str(), nullptr, 10);
+                    *image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     // read model name
                     std::getline(eval_file, tmp_info);
                     std::string model_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
@@ -267,17 +267,17 @@ namespace wf_monitor {
         }
 
         /***
-         *
+         * judge if a process is alive
          * @param command
          * @return
          */
-        bool is_process_alive(const std::string& command) {
+        bool is_process_alive(const std::string& process_name) {
             FILE* fp = nullptr;
             int count = 1;
             int buf_size = 100;
             char buf[buf_size];
             char command_buf[128];
-            sprintf(command_buf, "ps -C | grep -w %s | wc -l", command.c_str());
+            sprintf(command_buf, "ps -ef | grep -w %s | wc -l", process_name.c_str());
 
             if ((fp = popen(command_buf, "r")) == nullptr) {
                 LOG(ERROR) << "popen err";
@@ -289,7 +289,7 @@ namespace wf_monitor {
             pclose(fp);
             fp = nullptr;
             if (count <= 1) {
-                LOG(INFO) << "No active process for: " << command;
+                LOG(INFO) << "No active process for: " << process_name;
                 return false;
             } else {
                 return true;
@@ -377,32 +377,29 @@ namespace wf_monitor {
 
         /***
          * get model's name which is been training now
+         * @param log_dir
+         * @param model_name
          * @return
          */
-        bool get_training_model_name(std::string& model_name) {
+        bool get_training_model_name(const std::string& log_dir, std::string& model_name) {
             if (!is_net_training_process_alive()) {
                 LOG(INFO) << "Get training model name failed";
                 model_name = "";
                 return false;
             }
 
-            std::string command = "ps -ef| grep -w train_model.py";
-            std::array<char, 32> buffer = {""};
-            std::string result;
-            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
-            if (!pipe) {
-                LOG(INFO) << "popen() failed!";
+            std::string latest_log_file_path;
+            if (!get_latested_training_log_file(log_dir, latested_log_file_path)) {
+                LOG(INFO) << "Get training model name failed";
+                model_name = "";
                 return false;
             }
-            while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-                result += buffer.data();
-            }
-            LOG(INFO) << result;
-
-            std::string result_str(result);
-            auto start_idx = result_str.find("--net") + 6;
-            auto end_idx = result_str.find("--dataset") - 1;
-            model_name = result_str.substr(start_idx, end_idx - start_idx);
+            std::string latest_log_file_name = FileSystemProcessor::get_file_name(latest_log_file_path);
+            LOG(INFO) << latest_log_file_name;
+            std::string dataset_model_name = latest_log_file_name.substr(
+                    0, latest_log_file_name.find("classification") - 1);
+            LOG(INFO) << dataset_model_name;
+            model_name = dataset_model_name.substr(dataset_model_name.find_last_of('_') + 1);
             return true;
         }
 

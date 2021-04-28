@@ -13,15 +13,9 @@
 
 int main() {
 
-    while (true) {
-        std::string l_path;
-        wf_monitor::utils::get_latested_training_log_file(
-                "/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/log",
-                l_path
-        );
-        LOG(INFO) << l_path;
-
-    }
+    std::string model_name;
+    wf_monitor::utils::get_training_model_name("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/log", model_name);
+    LOG(INFO) << model_name;
 
     WFHttpServer server([](WFHttpTask *task) {
         task->get_resp()->append_output_body("<html>Hello World!</html>");
