@@ -336,7 +336,7 @@ namespace wf_monitor {
          * get checkpoint model eval statics from eval log file
          * @param eval_log_file_path
          * @param model_name
-         * @param dataset_name
+         * @param checkpoint_model_name
          * @param dataset_flag
          * @param image_count
          * @param precision
@@ -350,7 +350,7 @@ namespace wf_monitor {
                 std::string& dataset_name,
                 std::string& dataset_flag,
                 int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
-            if (!is_checkpoint_model_evaluated(eval_log_file_path, model_name)) {
+            if (!is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name)) {
                 dataset_name = "";
                 dataset_flag = "";
                 *image_count = 0;
@@ -375,7 +375,7 @@ namespace wf_monitor {
 
             std::string record_info;
             while (std::getline(eval_file, record_info)) {
-                if (record_info.find(model_name) != std::string::npos) {
+                if (record_info.find(checkpoint_model_name) != std::string::npos) {
                     std::string tmp_info;
                     // read dataset name
                     std::getline(eval_file, tmp_info);
@@ -420,6 +420,7 @@ namespace wf_monitor {
                 const std::string& project_dir, std::string& dataset_name,
                 std::string& dataset_flag,
                 int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
+            // get log file dir
             std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
             if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
                 LOG(ERROR) << "Training log dir: " << training_log_dir << ", not exist, get model eval statics failed";
@@ -431,7 +432,7 @@ namespace wf_monitor {
                 *f1 = 0.0;
                 return false;
             }
-
+            // get eval log file path
             std::string eval_log_file_path;
             if (!get_eval_log_file_path(training_log_dir, eval_log_file_path)) {
                 LOG(ERROR) << "Training log dir: " << training_log_dir << ", not exist, get model eval statics failed";
@@ -443,8 +444,9 @@ namespace wf_monitor {
                 *f1 = 0.0;
                 return false;
             }
-            std::string model_name;
-            if (!get_training_model_name(training_log_dir, model_name)) {
+            // get checkpoint model name
+            std::string model_dir;
+            if (!get_checkpoint_model_save_dir(project_dir, model_dir)) {
                 LOG(ERROR) << "Get model eval statics failed";
                 dataset_name = "";
                 dataset_flag = "";
@@ -454,8 +456,20 @@ namespace wf_monitor {
                 *f1 = 0.0;
                 return false;
             }
+            std::string checkpoint_model_path;
+            if (!get_latest_checkpoint(model_dir, checkpoint_model_path)) {
+                LOG(ERROR) << "Get model eval statics failed";
+                dataset_name = "";
+                dataset_flag = "";
+                *image_count = 0;
+                *precision = 0.0;
+                *recall = 0.0;
+                *f1 = 0.0;
+                return false;
+            }
+            std::string checkpoint_model_name = FileSystemProcessor::get_file_name(checkpoint_model_path);
             return _get_checkpoint_model_eval_statics_impl(
-                    eval_log_file_path, model_name, dataset_name,
+                    eval_log_file_path, checkpoint_model_name, dataset_name,
                     dataset_flag, image_count, precision, recall, f1);
         }
 
