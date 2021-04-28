@@ -29,9 +29,10 @@ int main() {
     float f1;
     wf_monitor::utils::get_checkpoint_model_eval_statics(
             "/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow",
-            dataset_name, dataset_flag, &precision, &recall, &f1);
+            dataset_name, dataset_flag, &image_count, &precision, &recall, &f1);
     LOG(INFO) << dataset_name;
     LOG(INFO) << dataset_flag;
+    LOG(INFO) << image_count;
     LOG(INFO) << precision;
     LOG(INFO) << recall;
     LOG(INFO) << f1;
