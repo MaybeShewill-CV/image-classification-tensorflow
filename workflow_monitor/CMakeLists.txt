@@ -72,6 +72,9 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/include/
 # utils
 FILE(GLOB WF_MONITOR_UTILS_SRC ${CMAKE_CURRENT_LIST_DIR}/source/utils/*cpp)
 
+# project
+FILE(GLOB WF_MONITOR_PROJECT_SRC ${CMAKE_CURRENT_LIST_DIR}/source/project/*cpp)
+
 # 3RD SOURCE
 FILE(GLOB_RECURSE WF_MONITOR_3RD_SRC ${CMAKE_CURRENT_LIST_DIR}/3rd_party/*cpp)
 
@@ -86,7 +89,7 @@ add_executable(
         wf_net_training_monitor.cpp
         ${WF_MONITOR_UTILS_SRC}
         ${WF_MONITOR_3RD_SRC}
-)
+        ${WF_MONITOR_PROJECT_SRC})
 target_link_libraries(
         workflow_monitor.out
         ${CMAKE_CURRENT_LIST_DIR}/3rd_party/libs/libglog.so
