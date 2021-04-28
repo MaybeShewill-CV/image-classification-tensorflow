@@ -28,7 +28,7 @@ namespace wf_monitor {
          * @param model_dir
          * @return
          */
-        bool get_latest_checkpoint(const std::string& model_dir, std::string& model_checkpoint_path) {
+        inline bool get_latest_checkpoint(const std::string& model_dir, std::string& model_checkpoint_path) {
             if (!FileSystemProcessor::is_directory_exist(model_dir)) {
                 LOG(ERROR) << "Model dir: " << model_dir << ", not exist";
                 return false;
@@ -89,7 +89,7 @@ namespace wf_monitor {
          * @param model_name
          * @return
          */
-        bool is_checkpoint_model_evaluated(const std::string& eval_log_file_path,
+        inline bool is_checkpoint_model_evaluated(const std::string& eval_log_file_path,
                                            const std::string& model_name) {
             std::ifstream eval_file;
             eval_file.open(eval_log_file_path, std::fstream::in);
@@ -115,7 +115,7 @@ namespace wf_monitor {
          * @param command
          * @return
          */
-        bool is_process_alive(const std::string& process_name) {
+        inline bool is_process_alive(const std::string& process_name) {
             FILE* fp = nullptr;
             int count = 1;
             int buf_size = 100;
@@ -144,7 +144,7 @@ namespace wf_monitor {
          * judge if the training process is alive
          * @return
          */
-        bool is_net_training_process_alive() {
+        inline bool is_net_training_process_alive() {
             return is_process_alive("train_model.py");
         }
 
@@ -152,7 +152,7 @@ namespace wf_monitor {
          * judge if the evaluating process is alive
          * @return
          */
-        bool is_net_evaluating_process_alive() {
+        inline bool is_net_evaluating_process_alive() {
             return is_process_alive("evaluate_model.py");
         }
 
@@ -161,7 +161,7 @@ namespace wf_monitor {
          * @param training_log_files
          * @return
          */
-        bool get_all_training_log_files(const std::string& log_dir, std::vector<std::string>& training_log_files) {
+        inline bool get_all_training_log_files(const std::string& log_dir, std::vector<std::string>& training_log_files) {
             if (!FileSystemProcessor::is_directory_exist(log_dir)) {
                 return false;
             }
@@ -184,7 +184,7 @@ namespace wf_monitor {
          * @param file_path
          * @return
          */
-        std::time_t get_file_last_modified_time(const std::string& file_path) {
+        inline std::time_t get_file_last_modified_time(const std::string& file_path) {
             if (!FileSystemProcessor::is_file_exist(file_path)) {
                 return 0;
             }
@@ -203,7 +203,7 @@ namespace wf_monitor {
          * @param latested_log_file_path
          * @return
          */
-        bool get_latested_training_log_file(const std::string& log_dir, std::string& latested_log_file_path) {
+        inline bool get_latested_training_log_file(const std::string& log_dir, std::string& latested_log_file_path) {
             std::vector<std::string> tmp_log_file_paths;
             if (!get_all_training_log_files(log_dir, tmp_log_file_paths)) {
                 latested_log_file_path = "";
@@ -225,7 +225,7 @@ namespace wf_monitor {
          * @param model_name
          * @return
          */
-        bool get_training_model_name(const std::string& log_dir, std::string& model_name) {
+        inline bool get_training_model_name(const std::string& log_dir, std::string& model_name) {
             if (!is_net_training_process_alive()) {
                 LOG(INFO) << "Get training model name failed";
                 model_name = "";
@@ -251,7 +251,7 @@ namespace wf_monitor {
          * @param dataset_name
          * @return
          */
-        bool get_training_dataset_name(const std::string& log_dir, std::string& dataset_name) {
+        inline bool get_training_dataset_name(const std::string& log_dir, std::string& dataset_name) {
             if (!is_net_training_process_alive()) {
                 LOG(INFO) << "Get training model name failed";
                 dataset_name = "";
@@ -276,7 +276,7 @@ namespace wf_monitor {
          * @param project_base_dir
          * @return
          */
-        bool get_checkpoint_model_save_dir(const std::string& project_base_dir, std::string& model_save_dir) {
+        inline bool get_checkpoint_model_save_dir(const std::string& project_base_dir, std::string& model_save_dir) {
 
             std::string project_log_dir = FileSystemProcessor::combine_path(project_base_dir, "log");
             std::string model_name;
@@ -311,7 +311,7 @@ namespace wf_monitor {
          * @param eval_log_file_path
          * @return
          */
-        bool get_eval_log_file_path(const std::string& log_dir, std::string& eval_log_file_path) {
+        inline bool get_eval_log_file_path(const std::string& log_dir, std::string& eval_log_file_path) {
             std::string model_name;
             std::string dataset_name;
             if (!get_training_model_name(log_dir, model_name) ||
@@ -344,7 +344,7 @@ namespace wf_monitor {
          * @param f1
          * @return
          */
-        bool _get_checkpoint_model_eval_statics_impl(
+        inline bool _get_checkpoint_model_eval_statics_impl(
                 const std::string& eval_log_file_path,
                 const std::string& checkpoint_model_name,
                 std::string& dataset_name,
@@ -416,7 +416,7 @@ namespace wf_monitor {
          * @param f1
          * @return
          */
-        bool get_checkpoint_model_eval_statics(
+        inline bool get_checkpoint_model_eval_statics(
                 const std::string& project_dir, std::string& dataset_name,
                 std::string& dataset_flag,
                 int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
@@ -483,7 +483,7 @@ namespace wf_monitor {
          * @param test_acc
          * @return
          */
-        bool _get_model_training_statics_impl(
+        inline bool _get_model_training_statics_impl(
                 const std::string& trainning_log_file_path,
                 int* epoch, float* train_loss, float* test_loss, float* train_acc, float* test_acc) {
             if (!FileSystemProcessor::is_file_exist(trainning_log_file_path)) {
@@ -577,7 +577,7 @@ namespace wf_monitor {
          * @param test_acc
          * @return
          */
-        bool get_model_training_statics(
+        inline bool get_model_training_statics(
                 const std::string& project_dir,
                 int* epoch, float* train_loss, float* test_loss, float* train_acc, float* test_acc) {
             std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
