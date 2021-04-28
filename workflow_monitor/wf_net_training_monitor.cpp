@@ -14,7 +14,7 @@
 int main() {
 
     std::string checkpoint_model_save_dir;
-    wf_monitor::utils::get_checkpoint_model_save_dir(checkpoint_model_save_dir);
+    wf_monitor::utils::get_checkpoint_model_save_dir("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow", checkpoint_model_save_dir);
     LOG(INFO) << checkpoint_model_save_dir;
 
     WFHttpServer server([](WFHttpTask *task) {
