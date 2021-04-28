@@ -12,7 +12,7 @@ namespace wf_monitor {
 
         namespace wfm_utils = wf_monitor::utils;
 
-        ProjectMonitor::ProjectMonitor(const int &config) {
+        ProjectMonitor::ProjectMonitor(const toml::value& config) {
 
         }
     }

@@ -14,7 +14,7 @@ namespace wf_monitor {
     namespace project {
 
         struct TrainStatic {
-            int epoch,
+            int epoch;
             float training_loss;
             float testing_loss;
             float training_accuracy;
@@ -90,7 +90,7 @@ namespace wf_monitor {
                 doc.AddMember("dataset_name", dataset_name_json, allocator);
                 // record dataset flag
                 rapidjson::Value dataset_flag_json;
-                dataset_flag_json.SetFloat(dataset_flag.c_str(), dataset_flag.size(), allocator);
+                dataset_flag_json.SetString(dataset_flag.c_str(), dataset_flag.size(), allocator);
                 doc.AddMember("dataset_flag", dataset_flag_json, allocator);
                 // record image count
                 rapidjson::Value image_count_json;
@@ -149,14 +149,14 @@ namespace wf_monitor {
             * copy constructor
             * @param transformer
             */
-            ProjectMonitor(const FaceDetector& transformer) = delete;
+            ProjectMonitor(const ProjectMonitor& transformer) = delete;
 
             /***
              * assign constructor
              * @param transformer
              * @return
              */
-            ProjectMonitor &operator=(const FaceDetector& transformer) = delete;
+            ProjectMonitor &operator=(const ProjectMonitor& transformer) = delete;
 
         };
     }
