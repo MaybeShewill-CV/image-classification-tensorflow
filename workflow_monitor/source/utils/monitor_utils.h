@@ -24,7 +24,7 @@ namespace wf_monitor {
         namespace fs = boost::filesystem;
 
         /***
-         *
+         * get latest checkpoint model file path
          * @param model_dir
          * @return
          */
@@ -111,7 +111,7 @@ namespace wf_monitor {
         }
 
         /***
-         * get checkpoint model eval statics
+         * get checkpoint model eval statics from eval log file
          * @param eval_log_file_path
          * @param checkpoint_model_name
          * @param dataset_name
@@ -172,7 +172,7 @@ namespace wf_monitor {
         }
 
         /***
-         * Get training status
+         * Get training status from training log file
          * @param trainning_log_file_path
          * @param epoch
          * @param train_loss

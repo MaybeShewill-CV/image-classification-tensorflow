@@ -17,6 +17,10 @@ int main() {
     wf_monitor::utils::get_checkpoint_model_save_dir("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow", checkpoint_model_save_dir);
     LOG(INFO) << checkpoint_model_save_dir;
 
+    std::string checkpoint_model_path;
+    wf_monitor::utils::get_latest_checkpoint(checkpoint_model_save_dir, checkpoint_model_path);
+    LOG(INFO) << checkpoint_model_path;
+
     WFHttpServer server([](WFHttpTask *task) {
         task->get_resp()->append_output_body("<html>Hello World!</html>");
     });
