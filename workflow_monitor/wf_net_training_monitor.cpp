@@ -21,17 +21,20 @@ int main() {
     wf_monitor::utils::get_latest_checkpoint(checkpoint_model_save_dir, checkpoint_model_path);
     LOG(INFO) << checkpoint_model_path;
 
-    int epoch = 0;
-    float train_loss = 0.0f;
-    float test_loss = 0.0f;
-    float train_acc = 0.0f;
-    float test_acc = 0.0f;
-    wf_monitor::utils::get_model_training_statics("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow", &epoch, &train_loss, &test_loss, &train_acc, &test_acc);
-    LOG(INFO) << epoch;
-    LOG(INFO) << train_loss;
-    LOG(INFO) << test_loss;
-    LOG(INFO) << train_acc;
-    LOG(INFO) << test_acc;
+    std::string dataset_name;
+    std::string dataset_flag;
+    int image_count;
+    float precision;
+    float recall;
+    float f1;
+    wf_monitor::utils::get_checkpoint_model_eval_statics(
+            "/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow",
+            dataset_name, dataset_flag, &precision, &recall, &f1);
+    LOG(INFO) << dataset_name;
+    LOG(INFO) << dataset_flag;
+    LOG(INFO) << precision;
+    LOG(INFO) << recall;
+    LOG(INFO) << f1;
 
     WFHttpServer server([](WFHttpTask *task) {
         task->get_resp()->append_output_body("<html>Hello World!</html>");
