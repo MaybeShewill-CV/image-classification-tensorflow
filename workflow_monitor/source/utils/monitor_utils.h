@@ -423,7 +423,7 @@ namespace wf_monitor {
             std::string latest_log_file_name = FileSystemProcessor::get_file_name(latest_log_file_path);
             std::string dataset_model_name = latest_log_file_name.substr(
                     0, latest_log_file_name.find("classification") - 1);
-            dataset_name = dataset_model_name.substr(0, dataset_model_name.find_last_of('_') - 1);
+            dataset_name = dataset_model_name.substr(0, dataset_model_name.find_last_of('_'));
             return true;
         }
 
