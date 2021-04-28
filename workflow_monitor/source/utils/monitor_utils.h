@@ -322,7 +322,7 @@ namespace wf_monitor {
             }
 
             char eval_log_file_name[128];
-            sprintf(eval_log_file_name, "%s_%s_evaluate.log", dataset_name, model_name);
+            sprintf(eval_log_file_name, "%s_%s_evaluate.log", dataset_name.c_str(), model_name.c_str());
             eval_log_file_path = FileSystemProcessor::combine_path(log_dir, eval_log_file_name);
             if (!FileSystemProcessor::is_file_exist(eval_log_file_path)) {
                 LOG(ERROR) << "Eval log file path: " << eval_log_file_path << ", not exist";
