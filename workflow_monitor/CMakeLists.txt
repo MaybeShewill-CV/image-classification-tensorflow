@@ -70,7 +70,7 @@ include_directories(${CMAKE_CURRENT_LIST_DIR}/include/
         )
 
 # utils
-FILE(GLOB WF_MONITOR_UTILS_SRC ${CMAKE_CURRENT_LIST_DIR}/source/utils/*cpp)
+FILE(GLOB WF_MONITOR_UTILS_SRC ${CMAKE_CURRENT_LIST_DIR}/source/utils/*)
 
 # project
 FILE(GLOB WF_MONITOR_PROJECT_SRC ${CMAKE_CURRENT_LIST_DIR}/source/project/*cpp)
