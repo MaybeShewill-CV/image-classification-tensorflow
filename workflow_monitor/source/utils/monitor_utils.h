@@ -412,14 +412,14 @@ namespace wf_monitor {
         bool get_training_dataset_name(const std::string& log_dir, std::string& dataset_name) {
             if (!is_net_training_process_alive()) {
                 LOG(INFO) << "Get training model name failed";
-                model_name = "";
+                dataset_name = "";
                 return false;
             }
 
             std::string latest_log_file_path;
             if (!get_latested_training_log_file(log_dir, latest_log_file_path)) {
                 LOG(INFO) << "Get training model name failed";
-                model_name = "";
+                dataset_name = "";
                 return false;
             }
             std::string latest_log_file_name = FileSystemProcessor::get_file_name(latest_log_file_path);
