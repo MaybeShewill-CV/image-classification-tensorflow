@@ -379,10 +379,10 @@ namespace wf_monitor {
                     std::string tmp_info;
                     // read dataset name
                     std::getline(eval_file, tmp_info);
-                    dataset_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    dataset_name = tmp_info.substr(tmp_info.find_last_of(':') + 2);
                     // read dataset flag
                     std::getline(eval_file, tmp_info);
-                    dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 2);
                     // read dataset image count
                     std::getline(eval_file, tmp_info);
                     *image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
