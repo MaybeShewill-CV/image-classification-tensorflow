@@ -111,162 +111,6 @@ namespace wf_monitor {
         }
 
         /***
-         * get checkpoint model eval statics from eval log file
-         * @param eval_log_file_path
-         * @param checkpoint_model_name
-         * @param dataset_name
-         * @param dataset_flag
-         * @param image_count
-         * @param precision
-         * @param recall
-         * @param f1
-         * @return
-         */
-        bool get_checkpoint_model_eval_statics(
-                const std::string& eval_log_file_path,
-                const std::string& checkpoint_model_name,
-                std::string& dataset_name,
-                std::string& dataset_flag,
-                int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
-            if (!is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name)) {
-                return false;
-            }
-
-            std::ifstream eval_file;
-            eval_file.open(eval_log_file_path, std::fstream::in);
-            if (!eval_file.is_open() || !eval_file.good()) {
-                LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
-                return false;
-            }
-
-            std::string record_info;
-            while (std::getline(eval_file, record_info)) {
-                if (record_info.find(checkpoint_model_name) != std::string::npos) {
-                    std::string tmp_info;
-                    // read dataset name
-                    std::getline(eval_file, tmp_info);
-                    dataset_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
-                    // read dataset flag
-                    std::getline(eval_file, tmp_info);
-                    dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 1);
-                    // read dataset image count
-                    std::getline(eval_file, tmp_info);
-                    *image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
-                    // read model name
-                    std::getline(eval_file, tmp_info);
-                    std::string model_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
-                    // read model precision
-                    std::getline(eval_file, tmp_info);
-                    *precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
-                    // read model recall
-                    std::getline(eval_file, tmp_info);
-                    *recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
-                    // read model f1
-                    std::getline(eval_file, tmp_info);
-                    *f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
-                    break;
-                }
-            }
-            eval_file.close();
-            return true;
-        }
-
-        /***
-         * Get training status from training log file
-         * @param trainning_log_file_path
-         * @param epoch
-         * @param train_loss
-         * @param test_loss
-         * @param train_acc
-         * @param test_acc
-         * @return
-         */
-        bool get_training_status(
-                const std::string& trainning_log_file_path,
-                int* epoch, float* train_loss, float* test_loss, float* train_acc, float* test_acc) {
-
-            if (!FileSystemProcessor::is_file_exist(trainning_log_file_path)) {
-                LOG(ERROR) << "Training log file: " << trainning_log_file_path << ", not exist";
-                return false;
-            }
-
-            std::ifstream train_log_file;
-            train_log_file.open(trainning_log_file_path, std::fstream::in);
-            if (!train_log_file.is_open() || !train_log_file.good()) {
-                LOG(ERROR) << "Open training log file: " << trainning_log_file_path << ", failed";
-                return false;
-            }
-
-            train_log_file.seekg(-1, std::ios_base::end);
-            if(train_log_file.peek() == '\n') {
-                train_log_file.seekg(-1, std::ios_base::cur);
-                int i = train_log_file.tellg();
-                for (i; i > 0; i--) {
-                    if (train_log_file.peek() == '\n') {
-                        //Found
-                        train_log_file.get();
-                        break;
-                    }
-                    train_log_file.seekg(i, std::ios_base::beg);
-                }
-            }
-            std::string latested_training_log_info;
-            std::getline(train_log_file, latested_training_log_info);
-
-            if (latested_training_log_info.find("INFO => Epoch:") == std::string::npos) {
-                *epoch = 0;
-                *train_loss = 0.0;
-                *test_loss = 0.0;
-                *train_acc = 0.0;
-                *test_loss = 0.0;
-                return false;
-            }
-
-            std::string epoch_flag = "Epoch:";
-            std::string time_flag = "Time:";
-            std::string train_loss_flag = "Train loss:";
-            std::string test_loss_flag = "Test loss:";
-            std::string train_acc_flag = "Train acc:";
-            std::string test_acc_flag = "Test acc:";
-            std::string end_flag = "...";
-
-            auto epoch_idx = latested_training_log_info.find(epoch_flag);
-            auto time_idx = latested_training_log_info.find(time_flag);
-            auto train_loss_idx = latested_training_log_info.find(train_loss_flag);
-            auto test_loss_idx = latested_training_log_info.find(test_loss_flag);
-            auto train_acc_idx = latested_training_log_info.find(train_acc_flag);
-            auto test_acc_idx = latested_training_log_info.find(test_acc_flag);
-            auto end_idx = latested_training_log_info.find(end_flag);
-
-            auto epoch_str = latested_training_log_info.substr(
-                    epoch_idx + epoch_flag.size() + 1, time_idx - epoch_idx - epoch_flag.size() - 1
-                    );
-            auto train_loss_str = latested_training_log_info.substr(
-                    train_loss_idx + train_loss_flag.size() + 1,
-                    test_loss_idx - train_loss_idx - train_loss_flag.size() - 1
-                    );
-            auto test_loss_str = latested_training_log_info.substr(
-                    test_loss_idx + test_loss_flag.size() + 1,
-                    train_acc_idx - test_loss_idx - test_loss_flag.size() - 1
-                    );
-            auto train_acc_str = latested_training_log_info.substr(
-                    train_acc_idx + train_acc_flag.size() + 1,
-                    test_acc_idx - train_acc_idx - train_acc_flag.size() - 1
-                    );
-            auto test_acc_str = latested_training_log_info.substr(
-                    test_acc_idx + test_acc_flag.size() + 1,
-                    end_idx - test_acc_idx - test_acc_flag.size() - 1
-                    );
-
-            *epoch = std::atoi(epoch_str.c_str());
-            *train_loss = std::atof(train_loss_str.c_str());
-            *test_loss = std::atof(test_loss_str.c_str());
-            *train_acc = std::atof(train_acc_str.c_str());
-            *test_acc = std::atof(test_acc_str.c_str());
-            return true;
-        }
-
-        /***
          * judge if a process is alive
          * @param command
          * @return
@@ -459,6 +303,278 @@ namespace wf_monitor {
                 return false;
             }
             return true;
+        }
+
+        /***
+         * get eval log file path
+         * @param log_dir
+         * @param eval_log_file_path
+         * @return
+         */
+        bool get_eval_log_file_path(const std::string& log_dir, std::string& eval_log_file_path) {
+            std::string model_name;
+            std::string dataset_name;
+            if (!get_training_model_name(log_dir, model_name) ||
+            !get_training_dataset_name(log_dir, dataset_name)) {
+                LOG(ERROR) << "Get eval log file path failed";
+                eval_log_file_path = "";
+                return false;
+            }
+
+            char eval_log_file_name[128];
+            sprintf(eval_log_file_name, "%s_%s_evaluate.log", dataset_name, model_name);
+            eval_log_file_path = FileSystemProcessor::combine_path(log_dir, eval_log_file_name);
+            if (!FileSystemProcessor::is_file_exist(eval_log_file_path)) {
+                LOG(ERROR) << "Eval log file path: " << eval_log_file_path << ", not exist";
+                eval_log_file_path = "";
+                return false;
+            }
+            return true;
+        }
+
+        /***
+         * get checkpoint model eval statics from eval log file
+         * @param eval_log_file_path
+         * @param checkpoint_model_name
+         * @param dataset_name
+         * @param dataset_flag
+         * @param image_count
+         * @param precision
+         * @param recall
+         * @param f1
+         * @return
+         */
+        bool _get_checkpoint_model_eval_statics_impl(
+                const std::string& eval_log_file_path,
+                const std::string& checkpoint_model_name,
+                std::string& dataset_name,
+                std::string& dataset_flag,
+                int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
+            if (!is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name)) {
+                dataset_name = "";
+                dataset_flag = "";
+                *image_count = 0;
+                *precision = 0.0;
+                *recall = 0.0;
+                *f1 = 0.0;
+                return false;
+            }
+
+            std::ifstream eval_file;
+            eval_file.open(eval_log_file_path, std::fstream::in);
+            if (!eval_file.is_open() || !eval_file.good()) {
+                LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
+                dataset_name = "";
+                dataset_flag = "";
+                *image_count = 0;
+                *precision = 0.0;
+                *recall = 0.0;
+                *f1 = 0.0;
+                return false;
+            }
+
+            std::string record_info;
+            while (std::getline(eval_file, record_info)) {
+                if (record_info.find(checkpoint_model_name) != std::string::npos) {
+                    std::string tmp_info;
+                    // read dataset name
+                    std::getline(eval_file, tmp_info);
+                    dataset_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    // read dataset flag
+                    std::getline(eval_file, tmp_info);
+                    dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    // read dataset image count
+                    std::getline(eval_file, tmp_info);
+                    *image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    // read model name
+                    std::getline(eval_file, tmp_info);
+                    std::string model_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
+                    // read model precision
+                    std::getline(eval_file, tmp_info);
+                    *precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    // read model recall
+                    std::getline(eval_file, tmp_info);
+                    *recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    // read model f1
+                    std::getline(eval_file, tmp_info);
+                    *f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    break;
+                }
+            }
+            eval_file.close();
+            return true;
+        }
+
+        /***
+         *
+         * @param project_dir
+         * @param dataset_name
+         * @param dataset_flag
+         * @param image_count
+         * @param precision
+         * @param recall
+         * @param f1
+         * @return
+         */
+        bool get_checkpoint_model_eval_statics(
+                const std::string& project_dir, std::string& dataset_name,
+                std::string& dataset_flag,
+                int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
+            std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
+            if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
+                LOG(ERROR) << "Training log dir: " << training_log_dir << ", not exist, get model eval statics failed";
+                dataset_name = "";
+                dataset_flag = "";
+                *image_count = 0;
+                *precision = 0.0;
+                *recall = 0.0;
+                *f1 = 0.0;
+                return false;
+            }
+
+            std::string eval_log_file_path;
+            if (!get_eval_log_file_path(training_log_dir, eval_log_file_path)) {
+                LOG(ERROR) << "Training log dir: " << training_log_dir << ", not exist, get model eval statics failed";
+                dataset_name = "";
+                dataset_flag = "";
+                *image_count = 0;
+                *precision = 0.0;
+                *recall = 0.0;
+                *f1 = 0.0;
+                return false;
+            }
+            return _get_checkpoint_model_eval_statics_impl(
+                    eval_log_file_path, dataset_name,
+                    dataset_flag, image_count, precision, recall, f1);
+        }
+
+        /***
+         * Get training status from training log file
+         * @param trainning_log_file_path
+         * @param epoch
+         * @param train_loss
+         * @param test_loss
+         * @param train_acc
+         * @param test_acc
+         * @return
+         */
+        bool _get_model_training_statics_impl(
+                const std::string& trainning_log_file_path,
+                int* epoch, float* train_loss, float* test_loss, float* train_acc, float* test_acc) {
+            if (!FileSystemProcessor::is_file_exist(trainning_log_file_path)) {
+                LOG(ERROR) << "Training log file: " << trainning_log_file_path << ", not exist";
+                return false;
+            }
+
+            std::ifstream train_log_file;
+            train_log_file.open(trainning_log_file_path, std::fstream::in);
+            if (!train_log_file.is_open() || !train_log_file.good()) {
+                LOG(ERROR) << "Open training log file: " << trainning_log_file_path << ", failed";
+                return false;
+            }
+
+            train_log_file.seekg(-1, std::ios_base::end);
+            if(train_log_file.peek() == '\n') {
+                train_log_file.seekg(-1, std::ios_base::cur);
+                int i = train_log_file.tellg();
+                for (i; i > 0; i--) {
+                    if (train_log_file.peek() == '\n') {
+                        //Found
+                        train_log_file.get();
+                        break;
+                    }
+                    train_log_file.seekg(i, std::ios_base::beg);
+                }
+            }
+            std::string latested_training_log_info;
+            std::getline(train_log_file, latested_training_log_info);
+
+            if (latested_training_log_info.find("INFO => Epoch:") == std::string::npos) {
+                *epoch = 0;
+                *train_loss = 0.0;
+                *test_loss = 0.0;
+                *train_acc = 0.0;
+                *test_loss = 0.0;
+                return false;
+            }
+
+            std::string epoch_flag = "Epoch:";
+            std::string time_flag = "Time:";
+            std::string train_loss_flag = "Train loss:";
+            std::string test_loss_flag = "Test loss:";
+            std::string train_acc_flag = "Train acc:";
+            std::string test_acc_flag = "Test acc:";
+            std::string end_flag = "...";
+
+            auto epoch_idx = latested_training_log_info.find(epoch_flag);
+            auto time_idx = latested_training_log_info.find(time_flag);
+            auto train_loss_idx = latested_training_log_info.find(train_loss_flag);
+            auto test_loss_idx = latested_training_log_info.find(test_loss_flag);
+            auto train_acc_idx = latested_training_log_info.find(train_acc_flag);
+            auto test_acc_idx = latested_training_log_info.find(test_acc_flag);
+            auto end_idx = latested_training_log_info.find(end_flag);
+
+            auto epoch_str = latested_training_log_info.substr(
+                    epoch_idx + epoch_flag.size() + 1, time_idx - epoch_idx - epoch_flag.size() - 1
+            );
+            auto train_loss_str = latested_training_log_info.substr(
+                    train_loss_idx + train_loss_flag.size() + 1,
+                    test_loss_idx - train_loss_idx - train_loss_flag.size() - 1
+            );
+            auto test_loss_str = latested_training_log_info.substr(
+                    test_loss_idx + test_loss_flag.size() + 1,
+                    train_acc_idx - test_loss_idx - test_loss_flag.size() - 1
+            );
+            auto train_acc_str = latested_training_log_info.substr(
+                    train_acc_idx + train_acc_flag.size() + 1,
+                    test_acc_idx - train_acc_idx - train_acc_flag.size() - 1
+            );
+            auto test_acc_str = latested_training_log_info.substr(
+                    test_acc_idx + test_acc_flag.size() + 1,
+                    end_idx - test_acc_idx - test_acc_flag.size() - 1
+            );
+
+            *epoch = std::atoi(epoch_str.c_str());
+            *train_loss = std::atof(train_loss_str.c_str());
+            *test_loss = std::atof(test_loss_str.c_str());
+            *train_acc = std::atof(train_acc_str.c_str());
+            *test_acc = std::atof(test_acc_str.c_str());
+            return true;
+        }
+
+        /***
+         *
+         * @param project_dir
+         * @param epoch
+         * @param train_loss
+         * @param test_loss
+         * @param train_acc
+         * @param test_acc
+         * @return
+         */
+        bool get_model_training_statics(
+                const std::string& project_dir,
+                int* epoch, float* train_loss, float* test_loss, float* train_acc, float* test_acc) {
+            std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
+            if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
+                *epoch = 0;
+                *train_loss = 0.0;
+                *test_loss = 0.0;
+                *train_acc = 0.0;
+                *test_acc = 0.0;
+                return false;
+            }
+            std::string train_log_file_path;
+            if (!get_latested_training_log_file(training_log_dir, train_log_file_path)) {
+                *epoch = 0;
+                *train_loss = 0.0;
+                *test_loss = 0.0;
+                *train_acc = 0.0;
+                *test_acc = 0.0;
+                return false;
+            }
+            return _get_model_training_statics_impl(
+                    train_log_file_path, epoch, train_loss, test_loss, train_acc, test_acc);
         }
     }
 }
