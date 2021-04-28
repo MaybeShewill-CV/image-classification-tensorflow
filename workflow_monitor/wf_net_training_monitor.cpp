@@ -13,13 +13,9 @@
 
 int main() {
 
-    std::string model_name;
-    wf_monitor::utils::get_training_model_name("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/log", model_name);
-    LOG(INFO) << model_name;
-
-    std::string dataset_name;
-    wf_monitor::utils::get_training_dataset_name("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/log", dataset_name);
-    LOG(INFO) << dataset_name;
+    std::string checkpoint_model_save_dir;
+    wf_monitor::utils::get_checkpoint_model_save_dir(checkpoint_model_save_dir);
+    LOG(INFO) << checkpoint_model_save_dir;
 
     WFHttpServer server([](WFHttpTask *task) {
         task->get_resp()->append_output_body("<html>Hello World!</html>");
