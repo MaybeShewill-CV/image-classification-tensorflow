@@ -389,7 +389,7 @@ namespace wf_monitor {
             }
 
             std::string latest_log_file_path;
-            if (!get_latested_training_log_file(log_dir, latested_log_file_path)) {
+            if (!get_latested_training_log_file(log_dir, latest_log_file_path)) {
                 LOG(INFO) << "Get training model name failed";
                 model_name = "";
                 return false;
@@ -405,39 +405,29 @@ namespace wf_monitor {
 
         /***
          * get dataset's name which is been training now
+         * @param log_dir
+         * @param dataset_name
          * @return
          */
-        bool get_training_dataset_name(std::string& dataset_name) {
+        bool get_training_dataset_name(const std::string& log_dir, std::string& dataset_name) {
             if (!is_net_training_process_alive()) {
-                LOG(INFO) << "Get training dataset name failed";
-                dataset_name = "";
+                LOG(INFO) << "Get training model name failed";
+                model_name = "";
                 return false;
             }
 
-            char buf_ps[1024];
-            FILE *ptr = nullptr;
-            char command[150];
-            char result[1024];
-            sprintf(command, "ps -ef | grep -w \"%s\"", "train_model.py --net");
-            if ((ptr=popen(command, "r")) != nullptr) {
-                while (fgets(buf_ps, 1024, ptr) != nullptr) {
-                    std::strcat(result, buf_ps);
-                    if (std::strlen(result) > 1024)
-                        break;
-                }
-                pclose(ptr);
-                ptr = nullptr;
-            } else {
-                LOG(ERROR) << "popen " << command << ", err";
-                LOG(INFO) << "Get training dataset name failed";
-                dataset_name = "";
+            std::string latest_log_file_path;
+            if (!get_latested_training_log_file(log_dir, latest_log_file_path)) {
+                LOG(INFO) << "Get training model name failed";
+                model_name = "";
                 return false;
             }
-
-            std::string result_str(result);
-            auto start_idx = result_str.find("--dataset") + 10;
-            auto end_idx = result_str.size() - 1;
-            dataset_name = result_str.substr(start_idx, end_idx - start_idx);
+            std::string latest_log_file_name = FileSystemProcessor::get_file_name(latest_log_file_path);
+            LOG(INFO) << latest_log_file_name;
+            std::string dataset_model_name = latest_log_file_name.substr(
+                    0, latest_log_file_name.find("classification") - 1);
+            LOG(INFO) << dataset_model_name;
+            dataset_name = dataset_model_name.substr(0, dataset_model_name.find_last_of('_') - 1);
             return true;
         }
 
@@ -447,15 +437,17 @@ namespace wf_monitor {
          * @return
          */
         bool get_checkpoint_model_save_dir(const std::string& project_base_dir, std::string& model_save_dir) {
+
+            std::string project_log_dir = FileSystemProcessor::combine_path(project_base_dir, "log");
             std::string model_name;
-            if (!get_training_model_name(model_name)) {
+            if (!get_training_model_name(project_log_dir, model_name)) {
                 LOG(INFO) << "Get model save dir failed";
                 model_save_dir = "";
                 return false;
             }
 
             std::string dataset_name;
-            if (!get_training_dataset_name(dataset_name)) {
+            if (!get_training_dataset_name(project_log_dir, dataset_name)) {
                 LOG(INFO) << "Get model save dir failed";
                 model_save_dir = "";
                 return false;
