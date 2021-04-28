@@ -12,6 +12,17 @@
 #include "source/utils/monitor_utils.h"
 
 int main() {
+
+    while (true) {
+        std::string l_path;
+        wf_monitor::utils::get_latested_training_log_file(
+                "/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/log",
+                l_path
+        );
+        LOG(INFO) << l_path;
+
+    }
+
     WFHttpServer server([](WFHttpTask *task) {
         task->get_resp()->append_output_body("<html>Hello World!</html>");
     });

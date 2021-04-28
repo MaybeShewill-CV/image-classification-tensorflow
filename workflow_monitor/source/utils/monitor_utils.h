@@ -9,9 +9,11 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <sys/stat.h>
 
 #include <glog/logging.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 
 #include "file_system_utils//file_system_processor.h"
 
@@ -19,6 +21,7 @@ namespace wf_monitor {
     namespace utils {
 
         using beec::common::file_system_utils::FileSystemProcessor;
+        namespace fs = boost::filesystem;
 
         /***
          *
@@ -124,7 +127,7 @@ namespace wf_monitor {
                 const std::string& checkpoint_model_name,
                 std::string& dataset_name,
                 std::string& dataset_flag,
-                int32_t image_count, float_t precision, float_t recall, float_t f1) {
+                int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
             if (!is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name)) {
                 return false;
             }
@@ -148,19 +151,19 @@ namespace wf_monitor {
                     dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 1);
                     // read dataset image count
                     std::getline(eval_file, tmp_info);
-                    image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    *image_count = std::strtol(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str(), nullptr, 10);
                     // read model name
                     std::getline(eval_file, tmp_info);
                     std::string model_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
                     // read model precision
                     std::getline(eval_file, tmp_info);
-                    precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    *precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     // read model recall
                     std::getline(eval_file, tmp_info);
-                    recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    *recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     // read model f1
                     std::getline(eval_file, tmp_info);
-                    f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+                    *f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
                     break;
                 }
             }
@@ -264,33 +267,112 @@ namespace wf_monitor {
         }
 
         /***
-         * judge if the training process is alive
+         *
+         * @param command
          * @return
          */
-        bool is_net_training_process_alive() {
+        bool is_process_alive(const std::string& command) {
             FILE* fp = nullptr;
             int count = 1;
             int buf_size = 100;
             char buf[buf_size];
-            char command[150];
+            char command_buf[128];
+            sprintf(command_buf, "ps -C | grep -w %s | wc -l", command.c_str());
 
-            sprintf(command, "ps -ef | grep -w %s | wc -l", "train_model.py");
-
-            if ((fp = popen(command, "r")) == nullptr) {
+            if ((fp = popen(command_buf, "r")) == nullptr) {
                 LOG(ERROR) << "popen err";
                 return false;
             }
-            if ((fgets(buf, buf_size, fp))!= NULL) {
+            if ((fgets(buf, buf_size, fp)) != nullptr) {
                 count = atoi(buf);
             }
             pclose(fp);
             fp = nullptr;
             if (count <= 1) {
-                LOG(INFO) << "No active training process";
+                LOG(INFO) << "No active process for: " << command;
                 return false;
             } else {
                 return true;
             }
+        }
+
+        /***
+         * judge if the training process is alive
+         * @return
+         */
+        bool is_net_training_process_alive() {
+            return is_process_alive("train_model.py");
+        }
+
+        /***
+         * judge if the evaluating process is alive
+         * @return
+         */
+        bool is_net_evaluating_process_alive() {
+            return is_process_alive("evaluate_model.py");
+        }
+
+        /***
+         *
+         * @param training_log_files
+         * @return
+         */
+        bool get_all_training_log_files(const std::string& log_dir, std::vector<std::string>& training_log_files) {
+            if (!FileSystemProcessor::is_directory_exist(log_dir)) {
+                return false;
+            }
+            std::vector<std::string> tmp_log_files;
+            FileSystemProcessor::get_directory_files(
+                    log_dir, tmp_log_files, ".log",
+                    FileSystemProcessor::SEARCH_OPTION_T::TOPDIRECTORYONLY);
+            training_log_files.clear();
+            for (const auto& file_path : tmp_log_files) {
+                auto file_name = FileSystemProcessor::get_file_name(file_path);
+                if (file_name.find("classification_train") != std::string::npos) {
+                    training_log_files.push_back(file_path);
+                }
+            }
+            return !training_log_files.empty();
+        }
+
+        /***
+         *
+         * @param file_path
+         * @return
+         */
+        std::time_t get_file_last_modified_time(const std::string& file_path) {
+            if (!FileSystemProcessor::is_file_exist(file_path)) {
+                return 0;
+            }
+            struct stat buf;
+            FILE *pFile = nullptr;
+            pFile = fopen(file_path.c_str(), "r");
+            int fd = fileno(pFile);
+            fstat(fd, &buf);
+            std::time_t time = buf.st_mtime;
+            return time;
+        }
+
+        /***
+         *
+         * @param log_dir
+         * @param latested_log_file_path
+         * @return
+         */
+        bool get_latested_training_log_file(const std::string& log_dir, std::string& latested_log_file_path) {
+            std::vector<std::string> tmp_log_file_paths;
+            if (!get_all_training_log_files(log_dir, tmp_log_file_paths)) {
+                latested_log_file_path = "";
+                return false;
+            }
+            std::map<std::time_t, std::string> tmp_log_file_map;
+            for (size_t index = 0; index < tmp_log_file_paths.size(); ++index) {
+                std::string tmp_file_path = tmp_log_file_paths[index];
+                tmp_log_file_map.insert(
+                        std::make_pair(get_file_last_modified_time(tmp_file_path), tmp_file_path));
+            }
+            latested_log_file_path = tmp_log_file_map.rbegin()->second;
+            return true;
         }
 
         /***
@@ -304,27 +386,18 @@ namespace wf_monitor {
                 return false;
             }
 
-            char buf_ps[1024];
-            char ps[1024]={0};
-            FILE *ptr = nullptr;
-            char command[150];
-            char result[1024];
-            sprintf(command, "ps -ef | grep -w \"%s\"", "train_model.py --net");
-            std::strcpy(ps, cmd);
-            if ((ptr=popen(ps, "r")) != nullptr) {
-                while (fgets(buf_ps, 1024, ptr) != nullptr) {
-                    std::strcat(result, buf_ps);
-                    if (std::strlen(result) > 1024)
-                        break;
-                }
-                pclose(ptr);
-                ptr = nullptr;
-            } else {
-                LOG(ERROR) << "popen " << command << ", err";
-                LOG(INFO) << "Get training model name failed";
-                model_name = "";
+            std::string command = "ps -ef| grep -w train_model.py";
+            std::array<char, 32> buffer = {""};
+            std::string result;
+            std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
+            if (!pipe) {
+                LOG(INFO) << "popen() failed!";
                 return false;
             }
+            while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+                result += buffer.data();
+            }
+            LOG(INFO) << result;
 
             std::string result_str(result);
             auto start_idx = result_str.find("--net") + 6;
@@ -345,13 +418,11 @@ namespace wf_monitor {
             }
 
             char buf_ps[1024];
-            char ps[1024]={0};
             FILE *ptr = nullptr;
             char command[150];
             char result[1024];
             sprintf(command, "ps -ef | grep -w \"%s\"", "train_model.py --net");
-            std::strcpy(ps, cmd);
-            if ((ptr=popen(ps, "r")) != nullptr) {
+            if ((ptr=popen(command, "r")) != nullptr) {
                 while (fgets(buf_ps, 1024, ptr) != nullptr) {
                     std::strcat(result, buf_ps);
                     if (std::strlen(result) > 1024)
@@ -382,14 +453,14 @@ namespace wf_monitor {
             std::string model_name;
             if (!get_training_model_name(model_name)) {
                 LOG(INFO) << "Get model save dir failed";
-                model_save_dir = ""
+                model_save_dir = "";
                 return false;
             }
 
             std::string dataset_name;
             if (!get_training_dataset_name(dataset_name)) {
                 LOG(INFO) << "Get model save dir failed";
-                model_save_dir = ""
+                model_save_dir = "";
                 return false;
             }
 
