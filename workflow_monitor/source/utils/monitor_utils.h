@@ -395,10 +395,8 @@ namespace wf_monitor {
                 return false;
             }
             std::string latest_log_file_name = FileSystemProcessor::get_file_name(latest_log_file_path);
-            LOG(INFO) << latest_log_file_name;
             std::string dataset_model_name = latest_log_file_name.substr(
                     0, latest_log_file_name.find("classification") - 1);
-            LOG(INFO) << dataset_model_name;
             model_name = dataset_model_name.substr(dataset_model_name.find_last_of('_') + 1);
             return true;
         }
@@ -423,10 +421,8 @@ namespace wf_monitor {
                 return false;
             }
             std::string latest_log_file_name = FileSystemProcessor::get_file_name(latest_log_file_path);
-            LOG(INFO) << latest_log_file_name;
             std::string dataset_model_name = latest_log_file_name.substr(
                     0, latest_log_file_name.find("classification") - 1);
-            LOG(INFO) << dataset_model_name;
             dataset_name = dataset_model_name.substr(0, dataset_model_name.find_last_of('_') - 1);
             return true;
         }

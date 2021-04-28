@@ -17,6 +17,10 @@ int main() {
     wf_monitor::utils::get_training_model_name("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/log", model_name);
     LOG(INFO) << model_name;
 
+    std::string dataset_name;
+    wf_monitor::utils::get_training_dataset_name("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow/log", dataset_name);
+    LOG(INFO) << dataset_name;
+
     WFHttpServer server([](WFHttpTask *task) {
         task->get_resp()->append_output_body("<html>Hello World!</html>");
     });
