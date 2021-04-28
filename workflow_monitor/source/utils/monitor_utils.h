@@ -346,7 +346,7 @@ namespace wf_monitor {
          */
         bool _get_checkpoint_model_eval_statics_impl(
                 const std::string& eval_log_file_path,
-                const std::string& model_name,
+                const std::string& checkpoint_model_name,
                 std::string& dataset_name,
                 std::string& dataset_flag,
                 int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
