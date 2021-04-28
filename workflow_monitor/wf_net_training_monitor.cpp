@@ -25,7 +25,7 @@ int main() {
     float train_loss = 0.0f;
     float test_loss = 0.0f;
     float train_acc = 0.0f;
-    float eval_acc = 0.0f;
+    float test_acc = 0.0f;
     wf_monitor::utils::get_model_training_statics("/home/baidu/Silly_Project/ICode/baidu/beec/image-classification-tensorflow", &epoch, &train_loss, &test_loss, &train_acc, &test_acc);
 
     WFHttpServer server([](WFHttpTask *task) {

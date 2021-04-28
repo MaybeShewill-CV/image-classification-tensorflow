@@ -86,11 +86,11 @@ namespace wf_monitor {
         /***
          * check if the checkpoint model has been evaluated
          * @param eval_log_file_path
-         * @param checkpoint_model_name
+         * @param model_name
          * @return
          */
         bool is_checkpoint_model_evaluated(const std::string& eval_log_file_path,
-                                           const std::string& checkpoint_model_name) {
+                                           const std::string& model_name) {
             std::ifstream eval_file;
             eval_file.open(eval_log_file_path, std::fstream::in);
             if (!eval_file.is_open() || !eval_file.good()) {
@@ -101,7 +101,7 @@ namespace wf_monitor {
             std::string record_info;
             bool model_has_been_evaluated = false;
             while (std::getline(eval_file, record_info)) {
-                if (record_info.find(checkpoint_model_name) != std::string::npos) {
+                if (record_info.find(model_name) != std::string::npos) {
                     model_has_been_evaluated = true;
                     break;
                 }
@@ -335,7 +335,7 @@ namespace wf_monitor {
         /***
          * get checkpoint model eval statics from eval log file
          * @param eval_log_file_path
-         * @param checkpoint_model_name
+         * @param model_name
          * @param dataset_name
          * @param dataset_flag
          * @param image_count
@@ -346,11 +346,11 @@ namespace wf_monitor {
          */
         bool _get_checkpoint_model_eval_statics_impl(
                 const std::string& eval_log_file_path,
-                const std::string& checkpoint_model_name,
+                const std::string& model_name,
                 std::string& dataset_name,
                 std::string& dataset_flag,
                 int32_t* image_count, float_t* precision, float_t* recall, float_t* f1) {
-            if (!is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name)) {
+            if (!is_checkpoint_model_evaluated(eval_log_file_path, model_name)) {
                 dataset_name = "";
                 dataset_flag = "";
                 *image_count = 0;
@@ -443,8 +443,19 @@ namespace wf_monitor {
                 *f1 = 0.0;
                 return false;
             }
+            std::string model_name;
+            if (!get_training_model_name(training_log_dir, model_name)) {
+                LOG(ERROR) << "Get model eval statics failed";
+                dataset_name = "";
+                dataset_flag = "";
+                *image_count = 0;
+                *precision = 0.0;
+                *recall = 0.0;
+                *f1 = 0.0;
+                return false;
+            }
             return _get_checkpoint_model_eval_statics_impl(
-                    eval_log_file_path, dataset_name,
+                    eval_log_file_path, model_name, dataset_name,
                     dataset_flag, image_count, precision, recall, f1);
         }
 
