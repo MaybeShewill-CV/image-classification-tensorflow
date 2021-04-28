@@ -375,7 +375,7 @@ namespace wf_monitor {
 
             std::string record_info;
             while (std::getline(eval_file, record_info)) {
-                if (record_info.find(checkpoint_model_name) != std::string::npos) {
+                if (record_info.find(model_name) != std::string::npos) {
                     std::string tmp_info;
                     // read dataset name
                     std::getline(eval_file, tmp_info);
