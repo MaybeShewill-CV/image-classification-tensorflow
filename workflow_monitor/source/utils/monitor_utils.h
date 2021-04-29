@@ -158,7 +158,7 @@ public:
      * @param epoch
      * @return
      */
-    static bool get_cur_train_epoch(int* epoch);
+    static bool get_cur_train_epoch(const std::string& project_dir, int* epoch);
 
 private:
     /***

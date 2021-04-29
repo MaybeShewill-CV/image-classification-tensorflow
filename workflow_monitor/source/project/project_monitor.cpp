@@ -185,7 +185,7 @@ bool ProjectMonitor::get_latest_checkpoint_model_path(std::string& model_name) {
  * @return
  */
 bool ProjectMonitor::get_current_train_epoch(int *epoch) {
-    if (!wf_monitor::MonitorUtils::get_cur_train_epoch(epoch)) {
+    if (!wfm_utils::MonitorUtils::get_cur_train_epoch(_m_project_dir, epoch)) {
         *epoch = 0;
         return false;
     }

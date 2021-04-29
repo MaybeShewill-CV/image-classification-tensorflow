@@ -302,7 +302,7 @@ inline bool MonitorUtils::get_model_training_statics(
                train_log_file_path, epoch, train_loss, test_loss, train_acc, test_acc);
 }
 
-inline bool MonitorUtils::get_cur_train_epoch(int* epoch) {
+inline bool MonitorUtils::get_cur_train_epoch(const std::string& project_dir, int* epoch) {
 
     std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
     if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
