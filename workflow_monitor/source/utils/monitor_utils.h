@@ -153,6 +153,13 @@ public:
         const std::string& project_dir, int* epoch, float* train_loss,
         float* test_loss, float* train_acc, float* test_acc);
 
+    /***
+     *
+     * @param epoch
+     * @return
+     */
+    static bool get_cur_train_epoch(int* epoch);
+
 private:
     /***
      *

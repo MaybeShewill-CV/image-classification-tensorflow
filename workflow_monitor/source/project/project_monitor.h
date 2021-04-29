@@ -19,6 +19,8 @@ struct TrainStatic {
     float testing_loss = 0.0;
     float training_accuracy = 0.0;
     float testing_accuracy = 0.0;
+    std::string model_name;
+    std::string dataset_name;
 
     /***
      * convert to json doc
@@ -49,6 +51,14 @@ struct TrainStatic {
         rapidjson::Value test_acc_json;
         test_acc_json.SetFloat(testing_accuracy);
         doc.AddMember("test_accuracy", test_acc_json, allocator);
+        // record dataset name
+        rapidjson::Value dataset_name_json;
+        dataset_name_json.SetString(dataset_name.c_str(), dataset_name.size(), allocator);
+        doc.AddMember("dataset_name": dataset_name_json, allocator);
+        // record dataset name
+        rapidjson::Value model_name_json;
+        model_name_json.SetString(model_name.c_str(), model_name.size(), allocator);
+        doc.AddMember("model_name": model_name_json, allocator);
 
         return doc;
     }
@@ -68,12 +78,15 @@ struct TrainStatic {
 };
 
 struct EvalStatic {
+    std::string model_name;
     std::string dataset_name;
     std::string dataset_flag;
+    std::string checkpoint_name;
     int image_count = 0;
     float precision = 0.0;
     float recall = 0.0;
     float f1 = 0.0;
+    int epoch = 0;
 
     /***
      * convert to json doc
@@ -92,6 +105,14 @@ struct EvalStatic {
         rapidjson::Value dataset_flag_json;
         dataset_flag_json.SetString(dataset_flag.c_str(), dataset_flag.size(), allocator);
         doc.AddMember("dataset_flag", dataset_flag_json, allocator);
+        // record model name
+        rapidjson::Value model_name_json;
+        model_name_json.SetString(model_name.c_str(), model_name.size(), allocator);
+        doc.AddMember("model_name", model_name_json, allocator);
+        // record checkpoint model name
+        rapidjson::Value checkpoint_name_json;
+        checkpoint_name_json.SetString(checkpoint_name.c_str(), checkpoint_name.size(), allocator);
+        doc.AddMember("checkpoint_model_name", checkpoint_name_json, allocator);
         // record image count
         rapidjson::Value image_count_json;
         image_count_json.SetInt(image_count);
@@ -108,6 +129,10 @@ struct EvalStatic {
         rapidjson::Value f1_json;
         f1_json.SetFloat(f1);
         doc.AddMember("eval_f1", f1_json, allocator);
+        // record epoch
+        rapidjson::Value epoch_json;
+        epoch_json.SetInt(epoch);
+        doc.AddMember("epoch", epoch_json, allocator);
 
         return doc;
     }
@@ -205,6 +230,13 @@ public:
      * @return
      */
     bool get_latest_checkpoint_model_path(std::string& model_path);
+
+    /***
+     *
+     * @param epoch
+     * @return
+     */
+    bool get_current_train_epoch(int* epoch);
 
     /***
      *

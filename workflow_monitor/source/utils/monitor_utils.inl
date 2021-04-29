@@ -277,9 +277,9 @@ inline bool MonitorUtils::get_latest_checkpoint_model_eval_statics(const std::st
                dataset_flag, image_count, precision, recall, f1);
 }
 
-inline bool MonitorUtils::get_model_training_statics(const std::string &project_dir, int *epoch,
-        float *train_loss, float *test_loss, float *train_acc,
-        float *test_acc) {
+inline bool MonitorUtils::get_model_training_statics(
+        const std::string &project_dir, int *epoch, float *train_loss,
+        float *test_loss, float *train_acc, float *test_acc) {
     std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
     if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
         *epoch = 0;
@@ -300,6 +300,30 @@ inline bool MonitorUtils::get_model_training_statics(const std::string &project_
     }
     return _get_model_training_statics_impl(
                train_log_file_path, epoch, train_loss, test_loss, train_acc, test_acc);
+}
+
+inline bool MonitorUtils::get_cur_train_epoch(int* epoch) {
+
+    std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
+    if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
+        *epoch = 0;
+        return false;
+    }
+    std::string train_log_file_path;
+    if (!get_latest_training_log_file(training_log_dir, train_log_file_path)) {
+        *epoch = 0;
+        return false;
+    }
+    float train_loss = 0.0;
+    float test_loss = 0.0;
+    float train_acc = 0.0;
+    float test_acc = 0.0;
+    if (!_get_model_training_statics_impl(
+            train_log_file_path, epoch, &train_loss, &test_loss, &train_acc, &test_acc)) {
+        *epoch = 0;
+        return false;
+    }
+    return true;
 }
 
 /************** Private Function Sets **************/

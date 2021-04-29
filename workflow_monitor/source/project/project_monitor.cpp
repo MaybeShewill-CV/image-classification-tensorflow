@@ -74,6 +74,14 @@ bool ProjectMonitor::get_latest_training_statics(TrainStatic &stat) {
     float test_loss = 0.0;
     float train_acc = 0.0;
     float test_acc = 0.0;
+    std::string model_name;
+    if (!get_current_training_model_name(model_name)) {
+        return false;
+    }
+    std::string dataset_name;
+    if (!get_current_training_dataset_name(dataset_name)) {
+        return false;
+    }
     if (!wfm_utils::MonitorUtils::get_model_training_statics(
                 _m_project_dir, &epoch, &train_loss, &test_loss, &train_acc, &test_acc)) {
         return false;
@@ -83,6 +91,8 @@ bool ProjectMonitor::get_latest_training_statics(TrainStatic &stat) {
     stat.testing_loss = test_loss;
     stat.training_accuracy = train_acc;
     stat.testing_accuracy = test_acc;
+    stat.model_name = model_name;
+    stat.dataset_name = model_name;
     return true;
 }
 
@@ -94,14 +104,28 @@ bool ProjectMonitor::get_latest_training_statics(TrainStatic &stat) {
 bool ProjectMonitor::get_latest_eval_statics(EvalStatic &stat) {
     std::string dataset_flag;
     std::string dataset_name;
+    std::string model_name;
+    std::string checkpoint_name;
     int image_count = 0;
     float precision = 0.0;
     float recall = 0.0;
     float f1 = 0.0;
+    int epoch;
     if (!wfm_utils::MonitorUtils::get_latest_checkpoint_model_eval_statics(
                 _m_project_dir, dataset_name, dataset_flag, &image_count, &precision, &recall, &f1)) {
         return false;
     }
+    if (!get_current_training_model_name(model_name)) {
+        return false;
+    }
+    std::string checkpoint_path;
+    if (!get_latest_checkpoint_model_path(checkpoint_path)) {
+        return false;
+    }
+    checkpoint_name = FileSystemProcessor::get_file_name(checkpoint_path);
+
+    stat.model_name = model_name;
+    stat.checkpoint_name = checkpoint_name;
     stat.dataset_name = dataset_name;
     stat.dataset_flag = dataset_flag;
     stat.image_count = image_count;
@@ -153,6 +177,19 @@ bool ProjectMonitor::get_latest_checkpoint_model_path(std::string& model_name) {
         return false;
     }
     return wfm_utils::MonitorUtils::get_latest_checkpoint_path(model_dir, model_name);
+}
+
+/***
+ *
+ * @param epoch
+ * @return
+ */
+bool ProjectMonitor::get_current_train_epoch(int *epoch) {
+    if (!wf_monitor::MonitorUtils::get_cur_train_epoch(epoch)) {
+        *epoch = 0;
+        return false;
+    }
+    return true;
 }
 
 /*********** Private Function Sets **********************/

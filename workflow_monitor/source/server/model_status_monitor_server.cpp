@@ -36,60 +36,72 @@ static ProjectMonitor* get_proj_monitor() {
 std::string process_get_cur_train_model_name() {
     auto* proj_monitor = get_proj_monitor();
     std::string cur_model_name;
+    char buff[128];
     if (!proj_monitor->get_current_training_model_name(cur_model_name)) {
-        return "get cur train model name failed";
-    } else {
-        return cur_model_name;
+        LOG(INFO) << "get cur train model name failed";
     }
+    sprintf(buff, "{\"model_name\": %s}", cur_model_name.c_str());
+    return std::string(buff);
 }
 
 std::string process_get_cur_train_dataset_name() {
     auto* proj_monitor = get_proj_monitor();
     std::string cur_dataset_name;
+    char buff[128];
     if (!proj_monitor->get_current_training_dataset_name(cur_dataset_name)) {
-        return "get cur train dataset name failed";
-    } else {
-        return cur_dataset_name;
+        LOG(INFO) << "get cur train dataset name failed";
     }
+    sprintf(buff, "{\"dataset_name\": %s}", cur_dataset_name.c_str());
+    return std::string(buff);
 }
 
 std::string process_get_latest_train_statics() {
     auto* proj_monitor = get_proj_monitor();
     wf_monitor::project::TrainStatic train_stat;
     if (!proj_monitor->get_latest_training_statics(train_stat)) {
-        return "get latest train statics failed";
-    } else {
-        return train_stat.to_str();
+        LOG(INFO) << "get latest train statics failed";
     }
+    return train_stat.to_str();
 }
 
 std::string process_get_latest_eval_statics() {
     auto* proj_monitor = get_proj_monitor();
     wf_monitor::project::EvalStatic eval_stat;
     if (!proj_monitor->get_latest_eval_statics(eval_stat)) {
-        return "get latest eval statics failed";
-    } else {
-        return eval_stat.to_str();
+        LOG(INFO) << "get latest eval statics failed";
     }
+    return eval_stat.to_str();
 }
 
 std::string process_is_latest_checkpoint_model_evaluated() {
     auto* proj_monitor = get_proj_monitor();
     if (!proj_monitor->is_latest_checkpoint_model_evaluated()) {
-        return "latest checkpoint model not evaluated";
+        return "{\"is_evaluated\": false}";
     } else {
-        return "latest checkpoint model has been evaluated";
+        return "{\"is_evaluated\": true}";
     }
 }
 
 std::string process_get_latest_checkpoint_model_path() {
     auto* proj_monitor = get_proj_monitor();
     std::string checkpoint_model_path;
+    char buff[128];
     if (!proj_monitor->get_latest_checkpoint_model_path(checkpoint_model_path)) {
-        return "";
-    } else {
-        return checkpoint_model_path;
+        LOG(INFO) << "Get latest checkpoint model path failed";
     }
+    sprintf(buff, "{\"checkpoint_model_path\": %s}", checkpoint_model_path.c_str());
+    return std::string(buff);
+}
+
+std::string process_get_current_train_epoch() {
+    auto* proj_monitor = get_proj_monitor();
+    int epoch = 0;
+    char buff[128];
+    if (!proj_monitor->get_current_train_epoch(&epoch)) {
+        LOG(INFO) << "Get current train epoch failed";
+    }
+    sprintf(buff, "{\"epoch\": %zu}", epoch);
+    return std::string(buff);
 }
 
 static InterfaceMap* init_interface_map() {
@@ -107,6 +119,8 @@ static InterfaceMap* init_interface_map() {
             std::make_pair("/get_latest_eval_statics", process_get_latest_eval_statics));
         interface_map->insert(
                 std::make_pair("/get_latest_checkpoint_path", process_get_latest_checkpoint_model_path));
+        interface_map->insert(
+                std::make_pair("/get_current_train_epoch", process_get_latest_checkpoint_model_path));
         interface_map->insert(
                 std::make_pair("/is_latest_checkpoint_model_evaluated",
                                process_is_latest_checkpoint_model_evaluated));
