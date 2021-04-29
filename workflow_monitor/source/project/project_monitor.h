@@ -54,11 +54,11 @@ struct TrainStatic {
         // record dataset name
         rapidjson::Value dataset_name_json;
         dataset_name_json.SetString(dataset_name.c_str(), dataset_name.size(), allocator);
-        doc.AddMember("dataset_name": dataset_name_json, allocator);
+        doc.AddMember("dataset_name", dataset_name_json, allocator);
         // record dataset name
         rapidjson::Value model_name_json;
         model_name_json.SetString(model_name.c_str(), model_name.size(), allocator);
-        doc.AddMember("model_name": model_name_json, allocator);
+        doc.AddMember("model_name", model_name_json, allocator);
 
         return doc;
     }
