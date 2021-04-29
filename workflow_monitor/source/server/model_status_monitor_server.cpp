@@ -73,6 +73,25 @@ std::string process_get_latest_eval_statics() {
     }
 }
 
+std::string process_is_latest_checkpoint_model_evaluated() {
+    auto* proj_monitor = get_proj_monitor();
+    if (!proj_monitor->is_latest_checkpoint_model_evaluated()) {
+        return "latest checkpoint model not evaluated";
+    } else {
+        return "latest checkpoint model has been evaluated";
+    }
+}
+
+std::string process_get_latest_checkpoint_model_path() {
+    auto* proj_monitor = get_proj_monitor();
+    std::string checkpoint_model_path;
+    if (!proj_monitor->get_latest_checkpoint_model_path(checkpoint_model_path)) {
+        return "";
+    } else {
+        return checkpoint_model_path;
+    }
+}
+
 static InterfaceMap* init_interface_map() {
     static InterfaceMap *interface_map = nullptr;
     if (interface_map == nullptr) {
@@ -86,6 +105,11 @@ static InterfaceMap* init_interface_map() {
             std::make_pair("/get_latest_train_statics", process_get_latest_train_statics));
         interface_map->insert(
             std::make_pair("/get_latest_eval_statics", process_get_latest_eval_statics));
+        interface_map->insert(
+                std::make_pair("/get_latest_checkpoint_path", process_get_latest_checkpoint_model_path));
+        interface_map->insert(
+                std::make_pair("/is_latest_checkpoint_model_evaluated",
+                               process_is_latest_checkpoint_model_evaluated));
     }
     return interface_map;
 }

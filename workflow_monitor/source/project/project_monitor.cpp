@@ -124,6 +124,37 @@ bool ProjectMonitor::is_checkpoint_model_evaluated(const std::string &checkpoint
     return wfm_utils::MonitorUtils::is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name);
 }
 
+/***
+ *
+ * @return
+ */
+bool ProjectMonitor::is_latest_checkpoint_model_evaluated() {
+    std::string model_save_dir;
+    if (!wfm_utils::MonitorUtils::get_checkpoint_model_save_dir(_m_project_dir, model_save_dir)) {
+        return false;
+    }
+    std::string checkpoint_model_path;
+    if (!wfm_utils::MonitorUtils::get_latest_checkpoint_path(model_save_dir, checkpoint_model_path)) {
+        return false;
+    }
+    std::string checkpoint_model_name = FileSystemProcessor::get_file_name(checkpoint_model_path);
+    return is_checkpoint_model_evaluated(checkpoint_model_name);
+}
+
+/***
+ *
+ * @param model_name
+ * @return
+ */
+bool ProjectMonitor::get_latest_checkpoint_model_path(std::string& model_name) {
+    std::string model_dir;
+    if (!wfm_utils::MonitorUtils::get_checkpoint_model_save_dir(_m_project_dir, model_dir)) {
+        model_name = "";
+        return false;
+    }
+    return wfm_utils::MonitorUtils::get_latest_checkpoint_path(model_dir, model_name);
+}
+
 /*********** Private Function Sets **********************/
 }
 }

@@ -43,7 +43,7 @@ public:
      * @param model_dir
      * @return
      */
-    static bool get_latest_checkpoint(const std::string& model_dir, std::string& model_checkpoint_path);
+    static bool get_latest_checkpoint_path(const std::string& model_dir, std::string& model_checkpoint_path);
 
     /***
      * check if the checkpoint model has been evaluated
@@ -150,8 +150,8 @@ public:
      * @return
      */
     static bool get_model_training_statics(
-        const std::string& project_dir,
-        int* epoch, float* train_loss, float* test_loss, float* train_acc, float* test_acc);
+        const std::string& project_dir, int* epoch, float* train_loss,
+        float* test_loss, float* train_acc, float* test_acc);
 
 private:
     /***
@@ -168,7 +168,6 @@ private:
      */
     static bool _get_checkpoint_model_eval_statics_impl(
         const std::string& eval_log_file_path,
-        const std::string& checkpoint_model_name,
         std::string& dataset_name,
         std::string& dataset_flag,
         int32_t* image_count, float_t* precision, float_t* recall, float_t* f1);

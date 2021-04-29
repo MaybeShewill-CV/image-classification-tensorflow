@@ -197,6 +197,19 @@ public:
      *
      * @return
      */
+    bool is_latest_checkpoint_model_evaluated();
+
+    /***
+     *
+     * @param model_path
+     * @return
+     */
+    bool get_latest_checkpoint_model_path(std::string& model_path);
+
+    /***
+     *
+     * @return
+     */
     inline bool is_successfully_initialized() const {
         return _m_successfully_init;
     }

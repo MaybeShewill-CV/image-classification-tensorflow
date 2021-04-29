@@ -12,6 +12,7 @@
 #include <boost/filesystem.hpp>
 
 #include "file_system_utils//file_system_processor.h"
+#include "project/project_monitor.h"
 
 namespace wf_monitor {
 namespace utils {
@@ -21,7 +22,7 @@ namespace fs = boost::filesystem;
 
 /************** Public Function Sets **************/
 
-inline bool MonitorUtils::get_latest_checkpoint(const std::string &model_dir,
+inline bool MonitorUtils::get_latest_checkpoint_path(const std::string &model_dir,
         std::string &model_checkpoint_path) {
     if (!FileSystemProcessor::is_directory_exist(model_dir)) {
         LOG(ERROR) << "Model dir: " << model_dir << ", not exist";
@@ -271,42 +272,8 @@ inline bool MonitorUtils::get_latest_checkpoint_model_eval_statics(const std::st
         *f1 = 0.0;
         return false;
     }
-    // get checkpoint model name
-    std::string model_dir;
-    if (!get_checkpoint_model_save_dir(project_dir, model_dir)) {
-        LOG(ERROR) << "Get model eval statics failed";
-        dataset_name = "";
-        dataset_flag = "";
-        *image_count = 0;
-        *precision = 0.0;
-        *recall = 0.0;
-        *f1 = 0.0;
-        return false;
-    }
-    std::string checkpoint_model_path;
-    if (!get_latest_checkpoint(model_dir, checkpoint_model_path)) {
-        LOG(ERROR) << "Get model eval statics failed";
-        dataset_name = "";
-        dataset_flag = "";
-        *image_count = 0;
-        *precision = 0.0;
-        *recall = 0.0;
-        *f1 = 0.0;
-        return false;
-    }
-    if (is_net_evaluating_process_alive()) {
-        LOG(INFO) << "Evaluating process is running now, get model eval statics later";
-        dataset_name = "";
-        dataset_flag = "";
-        *image_count = 0;
-        *precision = 0.0;
-        *recall = 0.0;
-        *f1 = 0.0;
-        return false;
-    }
-    std::string checkpoint_model_name = FileSystemProcessor::get_file_name(checkpoint_model_path);
     return _get_checkpoint_model_eval_statics_impl(
-               eval_log_file_path, checkpoint_model_name, dataset_name,
+               eval_log_file_path, dataset_name,
                dataset_flag, image_count, precision, recall, f1);
 }
 
@@ -338,22 +305,10 @@ inline bool MonitorUtils::get_model_training_statics(const std::string &project_
 /************** Private Function Sets **************/
 
 inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::string &eval_log_file_path,
-        const std::string &checkpoint_model_name,
         std::string &dataset_name,
         std::string &dataset_flag,
         int32_t *image_count, float_t *precision,
         float_t *recall, float_t *f1) {
-    if (!is_checkpoint_model_evaluated(eval_log_file_path, checkpoint_model_name)) {
-        LOG(INFO) << "Model: " << checkpoint_model_name << " has not been evaluated";
-        dataset_name = "";
-        dataset_flag = "";
-        *image_count = 0;
-        *precision = 0.0;
-        *recall = 0.0;
-        *f1 = 0.0;
-        return false;
-    }
-
     std::ifstream eval_file;
     eval_file.open(eval_log_file_path, std::fstream::in);
     if (!eval_file.is_open() || !eval_file.good()) {
@@ -367,35 +322,51 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
         return false;
     }
 
+    std::map<int, wf_monitor::project::EvalStatic> eval_statics;
+
     std::string record_info;
     while (std::getline(eval_file, record_info)) {
-        if (record_info.find(checkpoint_model_name) != std::string::npos) {
+        if (record_info.find("Eval model weights path:") != std::string::npos) {
+            //
+            auto checkpoint_name = record_info.substr(
+                    record_info.find_last_of('/') + 1,
+                    record_info.size() - record_info.find_last_of('/') - 1);
+            auto epoch_nums = std::atoi(checkpoint_name.substr(checkpoint_name.find('-') + 1).c_str());
+
+            wf_monitor::project::EvalStatic tmp_eval_stat;
             std::string tmp_info;
             // read dataset name
             std::getline(eval_file, tmp_info);
-            dataset_name = tmp_info.substr(tmp_info.find_last_of(':') + 2);
+            tmp_eval_stat.dataset_name = tmp_info.substr(tmp_info.find_last_of(':') + 2);
             // read dataset flag
             std::getline(eval_file, tmp_info);
-            dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 2);
+            tmp_eval_stat.dataset_flag = tmp_info.substr(tmp_info.find_last_of(':') + 2);
             // read dataset image count
             std::getline(eval_file, tmp_info);
-            *image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+            tmp_eval_stat.image_count = std::atoi(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
             // read model name
             std::getline(eval_file, tmp_info);
             std::string model_name = tmp_info.substr(tmp_info.find_last_of(':') + 1);
             // read model precision
             std::getline(eval_file, tmp_info);
-            *precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+            tmp_eval_stat.precision = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
             // read model recall
             std::getline(eval_file, tmp_info);
-            *recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+            tmp_eval_stat.recall = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
             // read model f1
             std::getline(eval_file, tmp_info);
-            *f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
-            break;
+            tmp_eval_stat.f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
+            eval_statics.insert(std::make_pair(epoch_nums, tmp_eval_stat));
         }
     }
     eval_file.close();
+    auto latest_eval_stat = eval_statics.rbegin()->second;
+    dataset_name = latest_eval_stat.dataset_name;
+    dataset_flag = latest_eval_stat.dataset_flag;
+    *image_count = latest_eval_stat.image_count;
+    *precision = latest_eval_stat.precision;
+    *recall = latest_eval_stat.recall;
+    *f1 = latest_eval_stat.f1;
     return true;
 }
 
