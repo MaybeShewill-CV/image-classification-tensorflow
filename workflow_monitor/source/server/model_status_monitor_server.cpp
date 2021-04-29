@@ -100,7 +100,7 @@ std::string process_get_current_train_epoch() {
     if (!proj_monitor->get_current_train_epoch(&epoch)) {
         LOG(INFO) << "Get current train epoch failed";
     }
-    sprintf(buff, "{\"epoch\": %zu}", epoch);
+    sprintf(buff, "{\"epoch\": %d}", epoch);
     return std::string(buff);
 }
 
