@@ -1,0 +1,183 @@
+/************************************************
+* Copyright 2021 MaybeShewill-CV All Rights Reserved..
+* Author: MaybeShewill-CV
+* File: modelStatusMonitorServer.cpp.cc
+* Date: 2021/4/29 下午3:49
+************************************************/
+
+#include "model_status_monitor_server.h"
+
+#include <glog/logging.h>
+
+#include "project/project_monitor.h"
+
+namespace wf_monitor {
+namespace server {
+
+namespace model_stat_monitor_impl {
+
+using wf_monitor::project::ProjectMonitor;
+using InterfaceMap = std::map<std::string, std::function<std::string(void)> >;
+
+static ProjectMonitor* get_proj_monitor() {
+    auto config = toml::parse("../conf/server_conf.ini");
+    static ProjectMonitor *monitor = nullptr;
+    if (monitor == nullptr) {
+        monitor = new ProjectMonitor(config);
+    } else if (!monitor->is_successfully_initialized()) {
+        ProjectMonitor* tmp = monitor;
+        delete tmp;
+        tmp = nullptr;
+        monitor = new ProjectMonitor(config);
+    }
+    return monitor;
+}
+
+std::string process_get_cur_train_model_name() {
+    auto* proj_monitor = get_proj_monitor();
+    std::string cur_model_name;
+    if (!proj_monitor->get_current_training_model_name(cur_model_name)) {
+        return "get cur train model name failed";
+    } else {
+        return cur_model_name;
+    }
+}
+
+std::string process_get_cur_train_dataset_name() {
+    auto* proj_monitor = get_proj_monitor();
+    std::string cur_dataset_name;
+    if (!proj_monitor->get_current_training_dataset_name(cur_dataset_name)) {
+        return "get cur train dataset name failed";
+    } else {
+        return cur_dataset_name;
+    }
+}
+
+std::string process_get_latest_train_statics() {
+    auto* proj_monitor = get_proj_monitor();
+    wf_monitor::project::TrainStatic train_stat;
+    if (!proj_monitor->get_latest_training_statics(train_stat)) {
+        return "get latest train statics failed";
+    } else {
+        return train_stat.to_str();
+    }
+}
+
+std::string process_get_latest_eval_statics() {
+    auto* proj_monitor = get_proj_monitor();
+    wf_monitor::project::EvalStatic eval_stat;
+    if (!proj_monitor->get_latest_eval_statics(eval_stat)) {
+        return "get latest eval statics failed";
+    } else {
+        return eval_stat.to_str();
+    }
+}
+
+static InterfaceMap* init_interface_map() {
+    static InterfaceMap *interface_map = nullptr;
+    if (interface_map == nullptr) {
+        interface_map = new InterfaceMap();
+        // register interface function
+        interface_map->insert(
+            std::make_pair("/get_cur_train_model_name", process_get_cur_train_model_name));
+        interface_map->insert(
+            std::make_pair("/get_cur_train_dataset_name", process_get_cur_train_dataset_name));
+        interface_map->insert(
+            std::make_pair("/get_latest_train_statics", process_get_latest_train_statics));
+        interface_map->insert(
+            std::make_pair("/get_latest_eval_statics", process_get_latest_eval_statics));
+    }
+    return interface_map;
+}
+
+void server_process(WFHttpServer *server, WFHttpTask *task) {
+    auto uri = task->get_req()->get_request_uri();
+    auto* interface_func = init_interface_map();
+
+    if (strcmp(task->get_req()->get_request_uri(), "/stop") == 0) {
+        DLOG(INFO) << "Request-URI: " << task->get_req()->get_request_uri();
+        static std::atomic<int> flag;
+        if (flag++ == 0) {
+            server->shutdown();
+        }
+        task->get_resp()->append_output_body("<html>Model status monitor server stop</html>");
+        return;
+    }
+    if (interface_func->find(uri) == interface_func->end()) {
+        task->get_resp()->append_output_body("<html>No such api registered</html>");
+        return;
+    } else {
+        auto proc_func = interface_func->find(uri)->second;
+        auto response_body = proc_func();
+        task->get_resp()->append_output_body(response_body);
+        return;
+    }
+}
+}
+
+namespace model_stat_monitor_server {
+
+/*****************Public Function Sets****************/
+
+/***
+ * 构造函数
+ * @param config
+ */
+ModelStatusMonitorServer::ModelStatusMonitorServer() {
+    struct WFServerParams params = HTTP_SERVER_PARAMS_DEFAULT;
+    params.max_connections = 200;
+    params.peer_response_timeout = 30 * 1000;
+    params.ssl_accept_timeout = 30 * 1000;
+    auto&& proc = std::bind(
+                      model_stat_monitor_impl::server_process,
+                      std::cref(this->_m_server),
+                      std::placeholders::_1);
+    _m_server = new WFHttpServer(&params, proc);
+}
+
+/***
+ * 析构函数
+ */
+ModelStatusMonitorServer::~ModelStatusMonitorServer() {
+    if (_m_server != nullptr) {
+        delete _m_server;
+        _m_server = nullptr;
+    }
+    if (model_stat_monitor_impl::init_interface_map() != nullptr) {
+        delete model_stat_monitor_impl::init_interface_map();
+    }
+    if (model_stat_monitor_impl::get_proj_monitor() != nullptr) {
+        delete model_stat_monitor_impl::get_proj_monitor();
+        LOG(INFO) << "Release project monitor";
+    }
+    LOG(INFO) << "Quit model status monitor server";
+}
+
+/***
+ * 启动函数
+ * @param port
+ * @return
+ */
+int ModelStatusMonitorServer::start(unsigned short port) {
+    return _m_server->start(port);
+}
+
+/***
+ *
+ * @param host
+ * @param port
+ * @return
+ */
+int ModelStatusMonitorServer::start(const char *host, unsigned short port) {
+    return _m_server->start(host, port);
+}
+
+/***
+ *
+ */
+void ModelStatusMonitorServer::stop() {
+    return _m_server->stop();
+}
+}
+}
+}
