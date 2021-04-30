@@ -13,10 +13,10 @@
 
 #include "server/model_status_monitor_server.h"
 
-int main() {
+int main(int argc, char** argv) {
 
     wf_monitor::server::model_stat_monitor_server::ModelStatusMonitorServer server;
-    if (server.start(9001) == 0) {
+    if (server.start(std::atoi(argv[1])) == 0) {
         server.wait_finish();
     } else {
         perror("start server");
