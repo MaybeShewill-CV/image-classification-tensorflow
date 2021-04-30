@@ -85,7 +85,7 @@ std::string process_is_latest_checkpoint_model_evaluated() {
 std::string process_get_latest_checkpoint_model_path() {
     auto* proj_monitor = get_proj_monitor();
     std::string checkpoint_model_path;
-    char buff[128];
+    char buff[256];
     if (!proj_monitor->get_latest_checkpoint_model_path(checkpoint_model_path)) {
         LOG(INFO) << "Get latest checkpoint model path failed";
     }
@@ -104,6 +104,24 @@ std::string process_get_current_train_epoch() {
     return std::string(buff);
 }
 
+std::string process_is_training_process_alive() {
+    auto* proj_monitor = get_proj_monitor();
+    if (!proj_monitor->is_training_process_alive()) {
+        return "{\"is_alive\": false}";
+    } else {
+        return "{\"is_alive\": true}";
+    }
+}
+
+std::string process_is_evaluating_process_alive() {
+    auto* proj_monitor = get_proj_monitor();
+    if (!proj_monitor->is_evaluating_process_alive()) {
+        return "{\"is_alive\": false}";
+    } else {
+        return "{\"is_alive\": true}";
+    }
+}
+
 static InterfaceMap* init_interface_map() {
     static InterfaceMap *interface_map = nullptr;
     if (interface_map == nullptr) {
@@ -120,10 +138,14 @@ static InterfaceMap* init_interface_map() {
         interface_map->insert(
                 std::make_pair("/get_latest_checkpoint_path", process_get_latest_checkpoint_model_path));
         interface_map->insert(
-                std::make_pair("/get_current_train_epoch", process_get_latest_checkpoint_model_path));
+                std::make_pair("/get_current_train_epoch", process_get_current_train_epoch));
         interface_map->insert(
                 std::make_pair("/is_latest_checkpoint_model_evaluated",
                                process_is_latest_checkpoint_model_evaluated));
+        interface_map->insert(
+                std::make_pair("/is_training_process_alive", process_is_training_process_alive));
+        interface_map->insert(
+                std::make_pair("/is_evaluating_process_alive", process_is_evaluating_process_alive));
     }
     return interface_map;
 }

@@ -495,12 +495,16 @@ inline bool MonitorUtils::_get_model_training_statics_impl(const std::string &tr
         }
         pclose(fp);
         fp = nullptr;
-        if (count <= 2) {
+#ifdef _DEBUG
+        int thresh = 1;
+#else
+        int thresh = 2;
+#endif
+        if (count <= thresh) {
             return false;
         } else {
             return true;
         }
     }
-
 }
 }

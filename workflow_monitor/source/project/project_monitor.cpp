@@ -192,6 +192,22 @@ bool ProjectMonitor::get_current_train_epoch(int *epoch) {
     return true;
 }
 
+/***
+ *
+ * @return
+ */
+bool ProjectMonitor::is_training_process_alive() {
+   return wfm_utils::MonitorUtils::is_net_training_process_alive();
+}
+
+/***
+ *
+ * @return
+ */
+bool ProjectMonitor::is_evaluating_process_alive() {
+    return wfm_utils::MonitorUtils::is_net_evaluating_process_alive();
+}
+
 /*********** Private Function Sets **********************/
 }
 }

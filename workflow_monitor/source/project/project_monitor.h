@@ -242,6 +242,18 @@ public:
      *
      * @return
      */
+    static bool is_training_process_alive();
+
+    /***
+     *
+     * @return
+     */
+    static bool is_evaluating_process_alive();
+
+    /***
+     *
+     * @return
+     */
     inline bool is_successfully_initialized() const {
         return _m_successfully_init;
     }
