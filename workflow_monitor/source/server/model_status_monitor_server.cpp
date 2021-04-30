@@ -217,7 +217,7 @@ void server_process(WFHttpServer *server, WFHttpTask *task) {
     } else {
         auto proc_func = interface_func->find(uri)->second;
         auto response_body = proc_func(task);
-        task->get_resp()->append_output_body(response_body);
+        task->get_resp()->append_output_body(response_body + '\n');
         return;
     }
 }
