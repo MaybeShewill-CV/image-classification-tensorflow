@@ -362,11 +362,12 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
         if (record_info.find("Eval model weights path:") != std::string::npos) {
             wf_monitor::project::EvalStatic tmp_eval_stat;
             // read checkpoint name
-            tmp_eval_stat.checkpoint_name = record_info.substr(
+            auto tmp_checkpoint_name = record_info.substr(
                     record_info.find_last_of('/') + 1,
-                    record_info.size() - record_info.find_last_of('/') - 1);
+                    record_info.size() - record_info.find_last_of('/') - 1)
+            tmp_eval_stat.checkpoint_name = tmp_checkpoint_name;
             // read epoch
-            tmp_eval_stat.epoch = std::atoi(checkpoint_name.substr(checkpoint_name.find('-') + 1).c_str());
+            tmp_eval_stat.epoch = std::atoi(tmp_checkpoint_name.substr(tmp_checkpoint_name.find('-') + 1).c_str());
             std::string tmp_info;
             // read dataset name
             std::getline(eval_file, tmp_info);
