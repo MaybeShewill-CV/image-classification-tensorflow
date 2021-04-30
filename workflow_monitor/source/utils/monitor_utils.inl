@@ -389,7 +389,7 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
             // read model f1
             std::getline(eval_file, tmp_info);
             tmp_eval_stat.f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
-            eval_statics.insert(std::make_pair(epoch_nums, tmp_eval_stat));
+            eval_statics.insert(std::make_pair(tmp_eval_stat.epoch, tmp_eval_stat));
         }
     }
     eval_file.close();
