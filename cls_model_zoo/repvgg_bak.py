@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # @Time    : 2021/3/31 下午5:24
-# @Author  : LuoYao
+# @Author  : MaybeShewill-CV
 # @Site    : ICode
-# @File    : repvgg_bak.py.py
+# @File    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
 # @IDE: PyCharm
 """
 origin
