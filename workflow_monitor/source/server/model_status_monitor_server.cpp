@@ -17,7 +17,7 @@ namespace server {
 namespace model_stat_monitor_impl {
 
 using wf_monitor::project::ProjectMonitor;
-using InterfaceMap = std::map<std::string, std::function<std::string(void)> >;
+using InterfaceMap = std::map<std::string, std::function<std::string (WFHttpTask*)>>;
 
 static ProjectMonitor* get_proj_monitor() {
     auto config = toml::parse("../conf/server_conf.ini");
@@ -33,7 +33,7 @@ static ProjectMonitor* get_proj_monitor() {
     return monitor;
 }
 
-std::string process_get_cur_train_model_name() {
+std::string process_get_cur_train_model_name(void*) {
     auto* proj_monitor = get_proj_monitor();
     std::string cur_model_name;
     char buff[128];
@@ -44,7 +44,7 @@ std::string process_get_cur_train_model_name() {
     return std::string(buff);
 }
 
-std::string process_get_cur_train_dataset_name() {
+std::string process_get_cur_train_dataset_name(void*) {
     auto* proj_monitor = get_proj_monitor();
     std::string cur_dataset_name;
     char buff[128];
@@ -55,7 +55,7 @@ std::string process_get_cur_train_dataset_name() {
     return std::string(buff);
 }
 
-std::string process_get_latest_train_statics() {
+std::string process_get_latest_train_statics(void*) {
     auto* proj_monitor = get_proj_monitor();
     wf_monitor::project::TrainStatic train_stat;
     if (!proj_monitor->get_latest_training_statics(train_stat)) {
@@ -64,7 +64,7 @@ std::string process_get_latest_train_statics() {
     return train_stat.to_str();
 }
 
-std::string process_get_latest_eval_statics() {
+std::string process_get_latest_eval_statics(void*) {
     auto* proj_monitor = get_proj_monitor();
     wf_monitor::project::EvalStatic eval_stat;
     if (!proj_monitor->get_latest_eval_statics(eval_stat)) {
@@ -73,7 +73,7 @@ std::string process_get_latest_eval_statics() {
     return eval_stat.to_str();
 }
 
-std::string process_is_latest_checkpoint_model_evaluated() {
+std::string process_is_latest_checkpoint_model_evaluated(void*) {
     auto* proj_monitor = get_proj_monitor();
     if (!proj_monitor->is_latest_checkpoint_model_evaluated()) {
         return "{\"is_evaluated\": false}";
@@ -82,7 +82,7 @@ std::string process_is_latest_checkpoint_model_evaluated() {
     }
 }
 
-std::string process_get_latest_checkpoint_model_path() {
+std::string process_get_latest_checkpoint_model_path(void*) {
     auto* proj_monitor = get_proj_monitor();
     std::string checkpoint_model_path;
     char buff[256];
@@ -93,7 +93,7 @@ std::string process_get_latest_checkpoint_model_path() {
     return std::string(buff);
 }
 
-std::string process_get_current_train_epoch() {
+std::string process_get_current_train_epoch(void*) {
     auto* proj_monitor = get_proj_monitor();
     int epoch = 0;
     char buff[128];
@@ -104,23 +104,69 @@ std::string process_get_current_train_epoch() {
     return std::string(buff);
 }
 
-std::string process_is_training_process_alive() {
-    auto* proj_monitor = get_proj_monitor();
-    if (!proj_monitor->is_training_process_alive()) {
+std::string process_is_training_process_alive(void*) {
+    if (!wf_monitor::project::ProjectMonitor::is_training_process_alive()) {
         return "{\"is_alive\": false}";
     } else {
         return "{\"is_alive\": true}";
     }
 }
 
-std::string process_is_evaluating_process_alive() {
-    auto* proj_monitor = get_proj_monitor();
-    if (!proj_monitor->is_evaluating_process_alive()) {
+std::string process_is_evaluating_process_alive(void*) {
+    if (!wf_monitor::project::ProjectMonitor::is_evaluating_process_alive()) {
         return "{\"is_alive\": false}";
     } else {
         return "{\"is_alive\": true}";
     }
 }
+
+void _apply_eval_on_latest_checkpoint_model(std::string *project_dir, std::string *output) {
+    auto* proj_monitor = get_proj_monitor();
+    std::string model_name;
+    std::string dataset_name;
+    std::string checkpoint_model_path;
+    if (!proj_monitor->get_current_training_model_name(model_name) ||
+    !proj_monitor->get_current_training_dataset_name(dataset_name) ||
+    !proj_monitor->get_latest_checkpoint_model_path(checkpoint_model_path)) {
+        LOG(ERROR) << "Fetch eval scripts params failed";
+        return;
+    }
+
+    char command_buf[512];
+//    sprintf(command_buf, "nohup bash %s/scripts/evaluate_model.sh %s %s %s %s > out.file 2>&1 &",
+//            project_dir->c_str(), model_name.c_str(), dataset_name.c_str(),
+//            checkpoint_model_path.c_str(), project_dir->c_str());
+    sprintf(command_buf, "bash %s/scripts/evaluate_model.sh %s %s %s %s",
+            project_dir->c_str(), model_name.c_str(), dataset_name.c_str(),
+            checkpoint_model_path.c_str(), project_dir->c_str());
+    LOG(INFO) << "Eval command: " << command_buf;
+    FILE* fp = nullptr;
+    if ((fp = popen(command_buf, "r")) == nullptr) {
+        LOG(ERROR) << "popen err";
+        return;
+    }
+    pclose(fp);
+    fp = nullptr;
+}
+
+std::string process_auto_eval_latest_checkpoint_model(WFHttpTask* task) {
+    if (wf_monitor::project::ProjectMonitor::is_evaluating_process_alive()) {
+        return R"({"status": -1, "msg": an evaluating process was alive})";
+    }
+    auto* proj_monitor = get_proj_monitor();
+    if (proj_monitor->is_latest_checkpoint_model_evaluated()) {
+        return R"({"status": -1, "msg": latest checkpoint model has been evaluated})";
+    }
+    auto* series = series_of(task);
+    auto* thread_task = WFThreadTaskFactory<std::string, std::string>::create_thread_task(
+            "eval_latest_checkppint", _apply_eval_on_latest_checkpoint_model,
+            [](void*) -> void {LOG(INFO) << "Eval complete";});
+    std::string proj_base_dir;
+    proj_monitor->get_project_base_dir(proj_base_dir);
+    *thread_task->get_input() = proj_base_dir;
+    series->push_back(thread_task);
+}
+
 
 static InterfaceMap* init_interface_map() {
     static InterfaceMap *interface_map = nullptr;
@@ -146,6 +192,8 @@ static InterfaceMap* init_interface_map() {
                 std::make_pair("/is_training_process_alive", process_is_training_process_alive));
         interface_map->insert(
                 std::make_pair("/is_evaluating_process_alive", process_is_evaluating_process_alive));
+        interface_map->insert(
+                std::make_pair("/auto_eval_latest_checkpoint_model", process_auto_eval_latest_checkpoint_model));
     }
     return interface_map;
 }
@@ -168,7 +216,7 @@ void server_process(WFHttpServer *server, WFHttpTask *task) {
         return;
     } else {
         auto proc_func = interface_func->find(uri)->second;
-        auto response_body = proc_func();
+        auto response_body = proc_func(task);
         task->get_resp()->append_output_body(response_body);
         return;
     }

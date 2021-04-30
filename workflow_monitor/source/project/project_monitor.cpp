@@ -110,7 +110,7 @@ bool ProjectMonitor::get_latest_eval_statics(EvalStatic &stat) {
     float precision = 0.0;
     float recall = 0.0;
     float f1 = 0.0;
-    int epoch;
+    int epoch = 0;
     if (!wfm_utils::MonitorUtils::get_latest_checkpoint_model_eval_statics(
                 _m_project_dir, dataset_name, dataset_flag, &image_count, &precision, &recall, &f1)) {
         return false;
@@ -123,6 +123,7 @@ bool ProjectMonitor::get_latest_eval_statics(EvalStatic &stat) {
         return false;
     }
     checkpoint_name = FileSystemProcessor::get_file_name(checkpoint_path);
+    epoch = std::atoi(checkpoint_name.substr(checkpoint_name.find_last_of('-') + 1).c_str());
 
     stat.model_name = model_name;
     stat.checkpoint_name = checkpoint_name;
@@ -132,6 +133,7 @@ bool ProjectMonitor::get_latest_eval_statics(EvalStatic &stat) {
     stat.precision = precision;
     stat.recall = recall;
     stat.f1 = f1;
+    stat.epoch = epoch;
     return true;
 }
 

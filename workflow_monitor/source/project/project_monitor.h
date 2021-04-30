@@ -258,6 +258,15 @@ public:
         return _m_successfully_init;
     }
 
+    /***
+     *
+     * @return
+     */
+    inline bool get_project_base_dir(std::string& base_dir) const {
+        base_dir = _m_project_dir;
+        return true;
+    }
+
 private:
     bool _m_successfully_init = true;
 

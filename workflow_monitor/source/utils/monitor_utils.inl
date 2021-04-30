@@ -48,9 +48,9 @@ inline bool MonitorUtils::get_latest_checkpoint_path(const std::string &model_di
     checkpoint_file.getline(checkpoint_model_name_cstr, char_size);
     std::string checkpoint_model_name(checkpoint_model_name_cstr);
     checkpoint_model_name = checkpoint_model_name.substr(
-            checkpoint_model_name.find_first_of('\"') + 1,
-            checkpoint_model_name.find_last_of('\"') - checkpoint_model_name.find_first_of('\"') - 1
-            );
+                                checkpoint_model_name.find_first_of('\"') + 1,
+                                checkpoint_model_name.find_last_of('\"') - checkpoint_model_name.find_first_of('\"') - 1
+                            );
     // check index file path
     std::string index_file_name = checkpoint_model_name + ".index";
     std::string index_file_path = FileSystemProcessor::combine_path(model_dir, index_file_name);
@@ -130,7 +130,7 @@ inline std::time_t MonitorUtils::get_file_last_modified_time(const std::string &
     if (!FileSystemProcessor::is_file_exist(file_path)) {
         return 0;
     }
-    struct stat buf{};
+    struct stat buf {};
     FILE *pFile = nullptr;
     pFile = fopen(file_path.c_str(), "r");
     int fd = fileno(pFile);
@@ -169,7 +169,7 @@ inline bool MonitorUtils::get_training_model_name(const std::string &log_dir, st
     }
     std::string latest_log_file_name = FileSystemProcessor::get_file_name(latest_log_file_path);
     std::string dataset_model_name = latest_log_file_name.substr(
-            0, latest_log_file_name.find("classification") - 1);
+                                         0, latest_log_file_name.find("classification") - 1);
     model_name = dataset_model_name.substr(dataset_model_name.find_last_of('_') + 1);
     return true;
 }
@@ -278,8 +278,8 @@ inline bool MonitorUtils::get_latest_checkpoint_model_eval_statics(const std::st
 }
 
 inline bool MonitorUtils::get_model_training_statics(
-        const std::string &project_dir, int *epoch, float *train_loss,
-        float *test_loss, float *train_acc, float *test_acc) {
+    const std::string &project_dir, int *epoch, float *train_loss,
+    float *test_loss, float *train_acc, float *test_acc) {
     std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
     if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
         *epoch = 0;
@@ -319,7 +319,7 @@ inline bool MonitorUtils::get_cur_train_epoch(const std::string& project_dir, in
     float train_acc = 0.0;
     float test_acc = 0.0;
     if (!_get_model_training_statics_impl(
-            train_log_file_path, epoch, &train_loss, &test_loss, &train_acc, &test_acc)) {
+                train_log_file_path, epoch, &train_loss, &test_loss, &train_acc, &test_acc)) {
         *epoch = 0;
         return false;
     }
@@ -353,8 +353,8 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
         if (record_info.find("Eval model weights path:") != std::string::npos) {
             //
             auto checkpoint_name = record_info.substr(
-                    record_info.find_last_of('/') + 1,
-                    record_info.size() - record_info.find_last_of('/') - 1);
+                                       record_info.find_last_of('/') + 1,
+                                       record_info.size() - record_info.find_last_of('/') - 1);
             auto epoch_nums = std::atoi(checkpoint_name.substr(checkpoint_name.find('-') + 1).c_str());
 
             wf_monitor::project::EvalStatic tmp_eval_stat;
@@ -478,33 +478,33 @@ inline bool MonitorUtils::_get_model_training_statics_impl(const std::string &tr
     return true;
 }
 
-    inline bool MonitorUtils::_is_process_alive(const std::string &process_name) {
-        FILE* fp = nullptr;
-        int count = 0;
-        int buf_size = 100;
-        char buf[buf_size];
-        char command_buf[128];
-        sprintf(command_buf, "ps -ef | grep -w %s | wc -l", process_name.c_str());
+inline bool MonitorUtils::_is_process_alive(const std::string &process_name) {
+    FILE* fp = nullptr;
+    int count = 0;
+    int buf_size = 100;
+    char buf[buf_size];
+    char command_buf[128];
+    sprintf(command_buf, "ps -ef | grep -w %s | wc -l", process_name.c_str());
 
-        if ((fp = popen(command_buf, "r")) == nullptr) {
-            LOG(ERROR) << "popen err";
-            return false;
-        }
-        if ((fgets(buf, buf_size, fp)) != nullptr) {
-            count = atoi(buf);
-        }
-        pclose(fp);
-        fp = nullptr;
-#ifdef _DEBUG
-        int thresh = 1;
-#else
-        int thresh = 2;
-#endif
-        if (count <= thresh) {
-            return false;
-        } else {
-            return true;
-        }
+    if ((fp = popen(command_buf, "r")) == nullptr) {
+        LOG(ERROR) << "popen err";
+        return false;
     }
+    if ((fgets(buf, buf_size, fp)) != nullptr) {
+        count = atoi(buf);
+    }
+    pclose(fp);
+    fp = nullptr;
+#ifdef _DEBUG
+    int thresh = 1;
+#else
+    int thresh = 2;
+#endif
+    if (count <= thresh) {
+        return false;
+    } else {
+        return true;
+    }
+}
 }
 }
