@@ -364,7 +364,7 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
             // read checkpoint name
             auto tmp_checkpoint_name = record_info.substr(
                     record_info.find_last_of('/') + 1,
-                    record_info.size() - record_info.find_last_of('/') - 1)
+                    record_info.size() - record_info.find_last_of('/') - 1);
             tmp_eval_stat.checkpoint_name = tmp_checkpoint_name;
             // read epoch
             tmp_eval_stat.epoch = std::atoi(tmp_checkpoint_name.substr(tmp_checkpoint_name.find('-') + 1).c_str());
