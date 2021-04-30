@@ -245,15 +245,18 @@ inline bool MonitorUtils::get_eval_log_file_path(const std::string &log_dir, std
 }
 
 inline bool MonitorUtils::get_latest_checkpoint_model_eval_statics(const std::string &project_dir,
+        std::string &checkpoint_name,
         std::string &dataset_name,
-        std::string &dataset_flag, int32_t *image_count,
+        std::string &dataset_flag, int32_t *epoch, int32_t *image_count,
         float_t *precision, float_t *recall, float_t *f1) {
     // get log file dir
     std::string training_log_dir = FileSystemProcessor::combine_path(project_dir, "log");
     if (!FileSystemProcessor::is_directory_exist(training_log_dir)) {
         LOG(ERROR) << "Training log dir: " << training_log_dir << ", not exist, get model eval statics failed";
+        checkpoint_name = "";
         dataset_name = "";
         dataset_flag = "";
+        *epoch = 0;
         *image_count = 0;
         *precision = 0.0;
         *recall = 0.0;
@@ -264,8 +267,10 @@ inline bool MonitorUtils::get_latest_checkpoint_model_eval_statics(const std::st
     std::string eval_log_file_path;
     if (!get_eval_log_file_path(training_log_dir, eval_log_file_path)) {
         LOG(ERROR) << "Training log dir: " << training_log_dir << ", not exist, get model eval statics failed";
+        checkpoint_name = "";
         dataset_name = "";
         dataset_flag = "";
+        *epoch = 0;
         *image_count = 0;
         *precision = 0.0;
         *recall = 0.0;
@@ -273,8 +278,8 @@ inline bool MonitorUtils::get_latest_checkpoint_model_eval_statics(const std::st
         return false;
     }
     return _get_checkpoint_model_eval_statics_impl(
-               eval_log_file_path, dataset_name,
-               dataset_flag, image_count, precision, recall, f1);
+               eval_log_file_path, checkpoint_name, dataset_name,
+               dataset_flag, epoch, image_count, precision, recall, f1);
 }
 
 inline bool MonitorUtils::get_model_training_statics(
@@ -329,8 +334,10 @@ inline bool MonitorUtils::get_cur_train_epoch(const std::string& project_dir, in
 /************** Private Function Sets **************/
 
 inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::string &eval_log_file_path,
+        std::string &checkpoint_name,
         std::string &dataset_name,
         std::string &dataset_flag,
+        int32_t *epoch,
         int32_t *image_count, float_t *precision,
         float_t *recall, float_t *f1) {
     std::ifstream eval_file;
@@ -339,6 +346,8 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
         LOG(ERROR) << "Open evaluation record file: " << eval_log_file_path << ", failed";
         dataset_name = "";
         dataset_flag = "";
+        checkpoint_name = "";
+        *epoch = 0;
         *image_count = 0;
         *precision = 0.0;
         *recall = 0.0;
@@ -351,13 +360,13 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
     std::string record_info;
     while (std::getline(eval_file, record_info)) {
         if (record_info.find("Eval model weights path:") != std::string::npos) {
-            //
-            auto checkpoint_name = record_info.substr(
-                                       record_info.find_last_of('/') + 1,
-                                       record_info.size() - record_info.find_last_of('/') - 1);
-            auto epoch_nums = std::atoi(checkpoint_name.substr(checkpoint_name.find('-') + 1).c_str());
-
             wf_monitor::project::EvalStatic tmp_eval_stat;
+            // read checkpoint name
+            tmp_eval_stat.checkpoint_name = record_info.substr(
+                    record_info.find_last_of('/') + 1,
+                    record_info.size() - record_info.find_last_of('/') - 1);
+            // read epoch
+            tmp_eval_stat.epoch = std::atoi(checkpoint_name.substr(checkpoint_name.find('-') + 1).c_str());
             std::string tmp_info;
             // read dataset name
             std::getline(eval_file, tmp_info);
@@ -385,8 +394,10 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
     }
     eval_file.close();
     auto latest_eval_stat = eval_statics.rbegin()->second;
+    checkpoint_name = latest_eval_stat.checkpoint_name;
     dataset_name = latest_eval_stat.dataset_name;
     dataset_flag = latest_eval_stat.dataset_flag;
+    *epoch = latest_eval_stat.epoch;
     *image_count = latest_eval_stat.image_count;
     *precision = latest_eval_stat.precision;
     *recall = latest_eval_stat.recall;

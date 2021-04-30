@@ -135,9 +135,9 @@ public:
      * @return
      */
     static bool get_latest_checkpoint_model_eval_statics(
-        const std::string& project_dir, std::string& dataset_name,
-        std::string& dataset_flag,
-        int32_t* image_count, float_t* precision, float_t* recall, float_t* f1);
+        const std::string& project_dir, std::string& checkpoint_model_name, std::string& dataset_name,
+        std::string& dataset_flag, int32_t* epoch, int32_t* image_count, float_t* precision,
+        float_t* recall, float_t* f1);
 
     /***
      *
@@ -174,10 +174,9 @@ private:
      * @return
      */
     static bool _get_checkpoint_model_eval_statics_impl(
-        const std::string& eval_log_file_path,
-        std::string& dataset_name,
-        std::string& dataset_flag,
-        int32_t* image_count, float_t* precision, float_t* recall, float_t* f1);
+        const std::string& eval_log_file_path, std::string& checkpoint_name, std::string& dataset_name,
+        std::string& dataset_flag, int32_t* epoch, int32_t* image_count, float_t* precision,
+        float_t* recall, float_t* f1);
 
     /***
      *
