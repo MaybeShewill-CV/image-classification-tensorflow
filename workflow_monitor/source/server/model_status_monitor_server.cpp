@@ -157,14 +157,33 @@ std::string process_auto_eval_latest_checkpoint_model(WFHttpTask* task) {
     if (proj_monitor->is_latest_checkpoint_model_evaluated()) {
         return R"({"status": -1, "msg": latest checkpoint model has been evaluated})";
     }
-    auto* series = series_of(task);
-    auto* thread_task = WFThreadTaskFactory<std::string, std::string>::create_thread_task(
-            "eval_latest_checkppint", _apply_eval_on_latest_checkpoint_model,
-            [](void*) -> void {LOG(INFO) << "Eval complete";});
+
     std::string proj_base_dir;
     proj_monitor->get_project_base_dir(proj_base_dir);
-    *thread_task->get_input() = proj_base_dir;
-    series->push_back(thread_task);
+    std::string model_name;
+    std::string dataset_name;
+    std::string checkpoint_model_path;
+    if (!proj_monitor->get_current_training_model_name(model_name) ||
+        !proj_monitor->get_current_training_dataset_name(dataset_name) ||
+        !proj_monitor->get_latest_checkpoint_model_path(checkpoint_model_path)) {
+        return R"({"status": -1, "msg": fetch eval scripts params failed})";
+    }
+
+    char command_buf[512];
+    sprintf(command_buf, "nohup bash %s/scripts/evaluate_model.sh %s %s %s %s > out.file 2>&1 &",
+            proj_base_dir.c_str(), model_name.c_str(), dataset_name.c_str(),
+            checkpoint_model_path.c_str(), proj_base_dir.c_str());
+//    sprintf(command_buf, "bash %s/scripts/evaluate_model.sh %s %s %s %s",
+//            proj_base_dir.c_str(), model_name.c_str(), dataset_name.c_str(),
+//            checkpoint_model_path.c_str(), proj_base_dir.c_str());
+    LOG(INFO) << "Eval command: " << command_buf;
+    FILE* fp = nullptr;
+    if ((fp = popen(command_buf, "r")) == nullptr) {
+        LOG(ERROR) << "popen err";
+        return R"({"status": -1, "msg": popen run eval scripts failed})";;
+    }
+    pclose(fp);
+    fp = nullptr;
 }
 
 
