@@ -120,35 +120,6 @@ std::string process_is_evaluating_process_alive(void*) {
     }
 }
 
-void _apply_eval_on_latest_checkpoint_model(std::string *project_dir, std::string *output) {
-    auto* proj_monitor = get_proj_monitor();
-    std::string model_name;
-    std::string dataset_name;
-    std::string checkpoint_model_path;
-    if (!proj_monitor->get_current_training_model_name(model_name) ||
-    !proj_monitor->get_current_training_dataset_name(dataset_name) ||
-    !proj_monitor->get_latest_checkpoint_model_path(checkpoint_model_path)) {
-        LOG(ERROR) << "Fetch eval scripts params failed";
-        return;
-    }
-
-    char command_buf[512];
-//    sprintf(command_buf, "nohup bash %s/scripts/evaluate_model.sh %s %s %s %s > out.file 2>&1 &",
-//            project_dir->c_str(), model_name.c_str(), dataset_name.c_str(),
-//            checkpoint_model_path.c_str(), project_dir->c_str());
-    sprintf(command_buf, "bash %s/scripts/evaluate_model.sh %s %s %s %s",
-            project_dir->c_str(), model_name.c_str(), dataset_name.c_str(),
-            checkpoint_model_path.c_str(), project_dir->c_str());
-    LOG(INFO) << "Eval command: " << command_buf;
-    FILE* fp = nullptr;
-    if ((fp = popen(command_buf, "r")) == nullptr) {
-        LOG(ERROR) << "popen err";
-        return;
-    }
-    pclose(fp);
-    fp = nullptr;
-}
-
 std::string process_auto_eval_latest_checkpoint_model(WFHttpTask* task) {
     if (wf_monitor::project::ProjectMonitor::is_evaluating_process_alive()) {
         return R"({"status": -1, "msg": an evaluating process was alive})";
