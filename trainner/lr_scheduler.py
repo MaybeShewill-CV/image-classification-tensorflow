@@ -183,10 +183,9 @@ def _test():
 
     :return:
     """
-    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_xception.yaml')
-    train_steps = 40000 * 128
+    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_resnet.yaml')
     global_step = tf.Variable(tf.constant(0.0), dtype=tf.float32, trainable=False, name='global_step')
-    decay_steps = tf.constant(train_steps, dtype=tf.float32, name='decay_steps')
+    decay_steps = tf.placeholder(dtype=tf.float32, name='decay_steps')
 
     lr_scheduler = LrScheduler(cfg=cfg)
     global_update = tf.assign_add(global_step, tf.constant(1.0))
@@ -196,14 +195,26 @@ def _test():
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
+        train_steps = 4000 * 128
         lrs = []
         for i in range(train_steps):
-            lrs.append(sess.run(lr))
+            lrs.append(sess.run(lr, feed_dict={decay_steps: 4000.0 * 128}))
         print('Global step: {}'.format(sess.run(global_step)))
         print('Complete tf calculate')
         x = np.linspace(0, train_steps, train_steps)
         plt.plot(x, lrs)
-        plt.show()
+
+        sess.run(tf.global_variables_initializer())
+        train_steps = 4000 * 192
+        lrs = []
+        for i in range(train_steps):
+            lrs.append(sess.run(lr, feed_dict={decay_steps: 4000.0 * 192}))
+        print('Global step: {}'.format(sess.run(global_step)))
+        print('Complete tf calculate')
+        x = np.linspace(0, train_steps, train_steps)
+        plt.plot(x, lrs)
+
+    plt.show()
 
     print('Complete')
 
@@ -212,4 +223,27 @@ if __name__ == '__main__':
     """
     test code
     """
-    _test()
+    # _test()
+
+    def _func(decay_steps, init_lr=None):
+        """
+
+        :return:
+        """
+        if init_lr is None:
+            init_lr = 0.0125
+        global_step = np.linspace(0, decay_steps, decay_steps)
+        cosine_decay = 0.5 * (1 + np.cos(np.pi * global_step / decay_steps))
+        return init_lr * cosine_decay
+
+    train_steps_1 = 40000 * 128
+    _x = np.linspace(0, train_steps_1, train_steps_1)
+    _lrs = _func(train_steps_1, init_lr=0.0125)
+    plt.plot(_x, _lrs)
+
+    train_steps_2 = 40000 * 192
+    _x = np.linspace(0, train_steps_2, train_steps_2)
+    _lrs = _func(train_steps_2, init_lr=0.0075)
+    plt.plot(_x, _lrs)
+
+    plt.show()
