@@ -82,6 +82,7 @@ struct EvalStatic {
     std::string dataset_name;
     std::string dataset_flag;
     std::string checkpoint_name;
+    std::string time_stamp;
     int image_count = 0;
     float precision = 0.0;
     float recall = 0.0;
@@ -133,6 +134,10 @@ struct EvalStatic {
         rapidjson::Value epoch_json;
         epoch_json.SetInt(epoch);
         doc.AddMember("epoch", epoch_json, allocator);
+        // record eval time stamp
+        rapidjson::Value time_stamp_json;
+        time_stamp_json.SetString(time_stamp.c_str(), time_stamp.size(), allocator);
+        doc.AddMember("time_stamp", time_stamp_json, allocator);
 
         return doc;
     }

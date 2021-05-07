@@ -266,7 +266,7 @@ inline bool MonitorUtils::get_latest_checkpoint_model_eval_statics(const std::st
     // get eval log file path
     std::string eval_log_file_path;
     if (!get_eval_log_file_path(training_log_dir, eval_log_file_path)) {
-        LOG(ERROR) << "Training log dir: " << training_log_dir << ", not exist, get model eval statics failed";
+        LOG(ERROR) << "Eval log file not exist, get model eval statics failed";
         checkpoint_name = "";
         dataset_name = "";
         dataset_flag = "";
@@ -355,19 +355,28 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
         return false;
     }
 
-    std::map<int, wf_monitor::project::EvalStatic> eval_statics;
+    std::map<std::time_t, wf_monitor::project::EvalStatic> eval_statics;
 
     std::string record_info;
     while (std::getline(eval_file, record_info)) {
         if (record_info.find("Eval model weights path:") != std::string::npos) {
             wf_monitor::project::EvalStatic tmp_eval_stat;
+            // read checkpoint model eval time stamp
+            auto tmp_time_stamp = record_info.substr(0, record_info.find_first_of("INFO") - 1);
+            std::tm t{};
+            std::istringstream ss(tmp_time_stamp);
+            ss >> std::get_time(&t, "%Y-%m-%dT%H:%M:%S");
+            std::time_t time_stamp = mktime(&t);
+            tmp_eval_stat.time_stamp = tmp_time_stamp;
+
             // read checkpoint name
             auto tmp_checkpoint_name = record_info.substr(
                     record_info.find_last_of('/') + 1,
                     record_info.size() - record_info.find_last_of('/') - 1);
             tmp_eval_stat.checkpoint_name = tmp_checkpoint_name;
             // read epoch
-            tmp_eval_stat.epoch = std::atoi(tmp_checkpoint_name.substr(tmp_checkpoint_name.find('-') + 1).c_str());
+            tmp_eval_stat.epoch = std::atoi(
+                    tmp_checkpoint_name.substr(tmp_checkpoint_name.find('-') + 1).c_str());
             std::string tmp_info;
             // read dataset name
             std::getline(eval_file, tmp_info);
@@ -390,7 +399,7 @@ inline bool MonitorUtils::_get_checkpoint_model_eval_statics_impl(const std::str
             // read model f1
             std::getline(eval_file, tmp_info);
             tmp_eval_stat.f1 = std::atof(tmp_info.substr(tmp_info.find_last_of(':') + 1).c_str());
-            eval_statics.insert(std::make_pair(tmp_eval_stat.epoch, tmp_eval_stat));
+            eval_statics.insert(std::make_pair(time_stamp, tmp_eval_stat));
         }
     }
     eval_file.close();
