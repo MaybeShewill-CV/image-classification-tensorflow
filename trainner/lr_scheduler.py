@@ -225,7 +225,7 @@ if __name__ == '__main__':
     """
     # _test()
 
-    def _func(decay_steps, init_lr=None):
+    def _cos_func(decay_steps, init_lr=None):
         """
 
         :return:
@@ -236,14 +236,44 @@ if __name__ == '__main__':
         cosine_decay = 0.5 * (1 + np.cos(np.pi * global_step / decay_steps))
         return init_lr * cosine_decay
 
+    def _exp_func(decay_steps, init_lr=None, decay_rate=0.1):
+        """
+
+        :param decay_steps:
+        :param init_lr:
+        :return:
+        """
+        if init_lr is None:
+            init_lr = 0.0125
+        global_step = np.linspace(0, decay_steps, decay_steps)
+        decayed_learning_rate = init_lr * np.power(decay_rate, (global_step / decay_steps))
+        return decayed_learning_rate
+
+    def _poly_func(decay_steps, init_lr=None, power=0.95, end_learning_rate=0.000001):
+        """
+
+        :param decay:
+        :return:
+        """
+        if init_lr is None:
+            init_lr = 0.0125
+        global_step = np.linspace(0, decay_steps, decay_steps)
+        decayed_learning_rate = (init_lr - end_learning_rate) * np.power(1 - global_step / decay_steps, power) + \
+                                end_learning_rate
+        return decayed_learning_rate
+
     train_steps_1 = 40000 * 128
     _x = np.linspace(0, train_steps_1, train_steps_1)
-    _lrs = _func(train_steps_1, init_lr=0.0125)
+    _lrs = _cos_func(train_steps_1, init_lr=0.03)
+    # _lrs = _exp_func(train_steps_1, init_lr=0.01)
+    # _lrs = _poly_func(train_steps_1, init_lr=0.01)
     plt.plot(_x, _lrs)
 
     train_steps_2 = 40000 * 192
     _x = np.linspace(0, train_steps_2, train_steps_2)
-    _lrs = _func(train_steps_2, init_lr=0.0075)
+    _lrs = _cos_func(train_steps_2, init_lr=0.02)
+    # _lrs = _exp_func(train_steps_2, init_lr=0.01)
+    # _lrs = _poly_func(train_steps_2, init_lr=0.01)
     plt.plot(_x, _lrs)
 
     plt.show()
