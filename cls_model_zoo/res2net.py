@@ -96,15 +96,25 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
             projection_shortcut = None
         else:
             projection_shortcut = kwargs['projection_shortcut']
+        if 'downsample' not in kwargs:
+            downsample = False
+        else:
+            downsample = kwargs['downsample']
 
         output_channels = kwargs['output_channels']
-        in_channles = tf.shape(input_tensor)[-1]
-        width = tf.cast(tf.floor(in_channles * (base_width / 64.0)), dtype=tf.int32)
+        in_channles = input_tensor.get_shape().as_list()[-1]
+        width = int(math.floor(in_channles * (base_width / 64.0)))
 
         with tf.variable_scope(name_or_scope=name):
+            # if projection_shortcut is not None:
+            #     shortcut = projection_shortcut(input_tensor)
+            # else:
+            #     shortcut = input_tensor
+
+            shortcut = input_tensor
             # first 1x1 conv block
             output_tensor = self._conv_block(
-                input_tensor=input_tensor,
+                input_tensor=shortcut,
                 k_size=1,
                 output_channels=width * scale,
                 stride=1,
@@ -124,7 +134,7 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
                     tmp_output_tensor = self._conv_block(
                         input_tensor=in_tensor,
                         k_size=3,
-                        output_channels=tf.shape(in_tensor)[-1],
+                        output_channels=in_tensor.get_shape().as_list()[-1],
                         stride=1,
                         name='residual_conv_{:d}'.format(index),
                         padding='SAME',
@@ -137,7 +147,7 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
                     tmp_output_tensor = self._conv_block(
                         input_tensor=tmp_input,
                         k_size=3,
-                        output_channels=tf.shape(in_tensor)[-1],
+                        output_channels=in_tensor.get_shape().as_list()[-1],
                         stride=1,
                         name='residual_conv_{:d}'.format(index),
                         padding='SAME',
@@ -162,13 +172,14 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
             # apply residual
             if projection_shortcut is not None:
                 shortcut = projection_shortcut(input_tensor)
-                output_tensor = self.avgpooling(
-                    inputdata=output_tensor,
-                    kernel_size=3,
-                    stride=2,
-                    padding='SAME',
-                    name='avg_pool'
-                )
+                if downsample:
+                    output_tensor = self.avgpooling(
+                        inputdata=output_tensor,
+                        kernel_size=3,
+                        stride=2,
+                        padding='SAME',
+                        name='avg_pool'
+                    )
             else:
                 shortcut = input_tensor
             output_tensor = tf.add(shortcut, output_tensor, name='residual_add')
@@ -213,12 +224,12 @@ class Res2Net(resnet_utils.ResnetBase):
         self._is_training = self._is_net_for_training()
 
         # set res2net params
-        self._res2net_size = 50
+        self._res2net_size = cfg.MODEL.RES2NET.NET_SIZE
         self._block_sizes = self._get_block_sizes()
+        self._bottleneck_scale = cfg.MODEL.RES2NET.BOTTLENECK_SCALE
+        self._bottleneck_base_width = cfg.MODEL.RES2NET.BOTTLENECK_BASE_WIDTH
         self._block_strides = [1, 2, 2, 2]
         self._block_func = _Bottle2Neck(cfg=self._cfg, phase=phase)
-        self._bottleneck_scale = 4
-        self._bottleneck_base_width = 26
 
         # set model hyper params
         self._class_nums = self._cfg.DATASET.NUM_CLASSES
@@ -298,23 +309,21 @@ class Res2Net(resnet_utils.ResnetBase):
             :param _inputs:
             :return:
             """
-            if self._res2net_size < 50:
-                _output_dims = output_dims
-            else:
-                _output_dims = output_dims * 4
-
+            _output_dims = output_dims
             return self._conv2d_fixed_padding(
                 inputs=_inputs, output_dims=_output_dims, kernel_size=1,
                 strides=stride, name='projection_shortcut')
 
         with tf.variable_scope(name):
+            downsample = False if stride == 1 else True
             inputs = self._block_func(
                 input_tensor=input_tensor,
                 output_channels=output_dims,
                 projection_shortcut=projection_shortcut,
                 scale=self._bottleneck_scale,
                 base_width=self._bottleneck_base_width,
-                name='init_block_fn'
+                name='init_block_fn',
+                downsample=downsample
             )
             for index in range(1, block_nums):
                 inputs = self._block_func(
@@ -323,7 +332,8 @@ class Res2Net(resnet_utils.ResnetBase):
                     projection_shortcut=None,
                     scale=self._bottleneck_scale,
                     base_width=self._bottleneck_base_width,
-                    name='block_fn_{:d}'.format(index)
+                    name='block_fn_{:d}'.format(index),
+                    downsample=downsample
                 )
 
         return inputs
@@ -354,7 +364,10 @@ class Res2Net(resnet_utils.ResnetBase):
 
             # apply residual block
             for index, block_nums in enumerate(self._block_sizes):
-                output_dims = 64 * (2 ** index)
+                if self._res2net_size < 50:
+                    output_dims = 64 * (2 ** index)
+                else:
+                    output_dims = 64 * (2 ** index) * 4
                 ouptut_tensor = self._res2net_block_layer(
                     input_tensor=ouptut_tensor,
                     stride=self._block_strides[index],
@@ -493,8 +506,4 @@ if __name__ == '__main__':
     """
     test code
     """
-    # _test()
-
-    t_in = tf.zeros(shape=[1, 64, 64, 16])
-    t_split = tf.split(t_in, num_or_size_splits=4, axis=-1)
-    print(t_split[0])
+    _test()
