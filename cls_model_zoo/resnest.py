@@ -183,23 +183,6 @@ class _SplitGroupConv(cnn_basenet.CNNBaseModel):
                 name='atten_conv_2'
             )
 
-            x = Conv2D(inter_channels, kernel_size=1)(gap)
-
-            x = BatchNormalization(axis=self.channel_axis, epsilon=1.001e-5)(x)
-            x = Activation(self.active)(x)
-            x = Conv2D(filters * radix, kernel_size=1)(x)
-
-            atten = self._rsoftmax(
-                input_tensor=atten,
-            )
-
-
-
-
-
-
-
-
 
 class ResNeSt(cnn_basenet.CNNBaseModel):
     """
@@ -238,7 +221,7 @@ class ResNeSt(cnn_basenet.CNNBaseModel):
         :param reuse:
         :return:
         """
-        pass
+        return tf.constant(0)
 
     def inference(self, input_tensor, name, reuse=False):
         """
@@ -248,7 +231,7 @@ class ResNeSt(cnn_basenet.CNNBaseModel):
         :param reuse:
         :return:
         """
-        pass
+        return tf.constant(0)
 
 
 def get_model(phase, cfg):
