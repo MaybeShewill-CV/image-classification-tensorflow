@@ -96,21 +96,20 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
             projection_shortcut = None
         else:
             projection_shortcut = kwargs['projection_shortcut']
-        if 'downsample' not in kwargs:
-            downsample = False
+        if 'stride' not in kwargs:
+            stride = 1
         else:
-            downsample = kwargs['downsample']
+            stride = kwargs['stride']
+        if 'in_channels' not in kwargs:
+            in_channels = input_tensor.get_shape().as_list()[-1]
+        else:
+            in_channels = kwargs['in_channels']
 
         output_channels = kwargs['output_channels']
-        in_channles = input_tensor.get_shape().as_list()[-1]
-        width = int(math.floor(in_channles * (base_width / 64.0)))
+        # in_channles = input_tensor.get_shape().as_list()[-1]
+        width = int(math.floor(in_channels * (base_width / 64.0)))
 
         with tf.variable_scope(name_or_scope=name):
-            # if projection_shortcut is not None:
-            #     shortcut = projection_shortcut(input_tensor)
-            # else:
-            #     shortcut = input_tensor
-
             shortcut = input_tensor
             # first 1x1 conv block
             output_tensor = self._conv_block(
@@ -129,13 +128,23 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
             output_tensors = []
             for index, in_tensor in enumerate(output_splits):
                 if index == 0:
-                    output_tensors.append(in_tensor)
+                    if stride != 1:
+                        tmp_output_tensor = self.avgpooling(
+                            inputdata=in_tensor,
+                            kernel_size=2,
+                            stride=stride,
+                            padding='SAME',
+                            name='avg_pool'
+                        )
+                    else:
+                        tmp_output_tensor = in_tensor
+                    output_tensors.append(tmp_output_tensor)
                 elif index == 1:
                     tmp_output_tensor = self._conv_block(
                         input_tensor=in_tensor,
                         k_size=3,
                         output_channels=in_tensor.get_shape().as_list()[-1],
-                        stride=1,
+                        stride=stride,
                         name='residual_conv_{:d}'.format(index),
                         padding='SAME',
                         use_bias=False,
@@ -143,12 +152,15 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
                     )
                     output_tensors.append(tmp_output_tensor)
                 else:
-                    tmp_input = tf.add(output_tensors[-1], in_tensor)
+                    if stride != 1:
+                        tmp_input = in_tensor
+                    else:
+                        tmp_input = tf.add(output_tensors[-1], in_tensor)
                     tmp_output_tensor = self._conv_block(
                         input_tensor=tmp_input,
                         k_size=3,
                         output_channels=in_tensor.get_shape().as_list()[-1],
-                        stride=1,
+                        stride=stride,
                         name='residual_conv_{:d}'.format(index),
                         padding='SAME',
                         use_bias=False,
@@ -172,14 +184,6 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
             # apply residual
             if projection_shortcut is not None:
                 shortcut = projection_shortcut(input_tensor)
-                if downsample:
-                    output_tensor = self.avgpooling(
-                        inputdata=output_tensor,
-                        kernel_size=3,
-                        stride=2,
-                        padding='SAME',
-                        name='avg_pool'
-                    )
             else:
                 shortcut = input_tensor
             output_tensor = tf.add(shortcut, output_tensor, name='residual_add')
@@ -303,37 +307,43 @@ class Res2Net(resnet_utils.ResnetBase):
         :param name: layer name
         :return:
         """
+        if self._res2net_size < 50:
+            _output_dims = output_dims
+        else:
+            _output_dims = output_dims * 4
+        _in_channles = output_dims
+
         def projection_shortcut(_inputs):
             """
             shortcut projection to align the feature maps
             :param _inputs:
             :return:
             """
-            _output_dims = output_dims
             return self._conv2d_fixed_padding(
                 inputs=_inputs, output_dims=_output_dims, kernel_size=1,
                 strides=stride, name='projection_shortcut')
 
         with tf.variable_scope(name):
-            downsample = False if stride == 1 else True
             inputs = self._block_func(
                 input_tensor=input_tensor,
-                output_channels=output_dims,
+                output_channels=_output_dims,
                 projection_shortcut=projection_shortcut,
                 scale=self._bottleneck_scale,
                 base_width=self._bottleneck_base_width,
                 name='init_block_fn',
-                downsample=downsample
+                in_channels=_in_channles,
+                stride=stride
             )
             for index in range(1, block_nums):
                 inputs = self._block_func(
                     input_tensor=inputs,
-                    output_channels=output_dims,
+                    output_channels=_output_dims,
                     projection_shortcut=None,
                     scale=self._bottleneck_scale,
                     base_width=self._bottleneck_base_width,
                     name='block_fn_{:d}'.format(index),
-                    downsample=downsample
+                    in_channels=_in_channles,
+                    stride=1
                 )
 
         return inputs
@@ -364,10 +374,7 @@ class Res2Net(resnet_utils.ResnetBase):
 
             # apply residual block
             for index, block_nums in enumerate(self._block_sizes):
-                if self._res2net_size < 50:
-                    output_dims = 64 * (2 ** index)
-                else:
-                    output_dims = 64 * (2 ** index) * 4
+                output_dims = 64 * (2 ** index)
                 ouptut_tensor = self._res2net_block_layer(
                     input_tensor=ouptut_tensor,
                     stride=self._block_strides[index],
