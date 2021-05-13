@@ -8,7 +8,6 @@
 """
 Res2Net model for image classification
 """
-import collections
 import time
 import math
 
@@ -131,7 +130,7 @@ class _Bottle2Neck(cnn_basenet.CNNBaseModel):
                     if stride != 1:
                         tmp_output_tensor = self.avgpooling(
                             inputdata=in_tensor,
-                            kernel_size=2,
+                            kernel_size=3,
                             stride=stride,
                             padding='SAME',
                             name='avg_pool'
