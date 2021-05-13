@@ -113,7 +113,7 @@ class DenseNet(cnn_basenet.CNNBaseModel):
                 result = self.layerbn(inputdata=result, is_training=self._is_training, name='bn', scale=False)
             result = self.relu(inputdata=result, name='densenet_conv_block_output')
 
-            return result
+        return result
 
     def _composite_conv(self, inputdata, out_channel, name):
         """
@@ -125,30 +125,24 @@ class DenseNet(cnn_basenet.CNNBaseModel):
         """
         with tf.variable_scope(name):
 
-            bn_1 = self.layerbn(inputdata=inputdata, is_training=self._is_training, name='bn_1')
-
-            relu_1 = self.relu(bn_1, name='relu_1')
+            output = self.layerbn(inputdata=inputdata, is_training=self._is_training, name='bn_1')
+            output = self.relu(output, name='relu_1')
 
             if self._with_bc:
-                conv_1 = self.conv2d(inputdata=relu_1, out_channel=out_channel,
-                                     kernel_size=1,
-                                     padding='SAME', stride=1, use_bias=False,
-                                     name='conv_1')
-
-                bn_2 = self.layerbn(inputdata=conv_1, is_training=self._is_training, name='bn_2')
-
-                relu_2 = self.relu(inputdata=bn_2, name='relu_2')
-                conv_2 = self.conv2d(inputdata=relu_2, out_channel=out_channel,
-                                     kernel_size=3,
-                                     stride=1, padding='SAME', use_bias=False,
-                                     name='conv_2')
-                return conv_2
+                output = self.conv2d(
+                    inputdata=output, out_channel=out_channel,
+                    kernel_size=1, padding='SAME', stride=1, use_bias=False, name='conv_1'
+                )
+                output = self.layerbn(inputdata=output, is_training=self._is_training, name='bn_2')
+                output = self.relu(inputdata=output, name='relu_2')
+                output = self.conv2d(
+                    inputdata=output, out_channel=out_channel,
+                    kernel_size=3, stride=1, padding='SAME', use_bias=False, name='conv_2')
             else:
-                conv_2 = self.conv2d(inputdata=relu_1, out_channel=out_channel,
-                                     kernel_size=3,
-                                     stride=1, padding='SAME', use_bias=False,
-                                     name='conv_2')
-                return conv_2
+                output = self.conv2d(
+                    inputdata=output, out_channel=out_channel, kernel_size=3,
+                    stride=1, padding='SAME', use_bias=False, name='conv_2')
+        return output
 
     def _denseconnect_layers(self, inputdata, name):
         """
@@ -181,7 +175,7 @@ class DenseNet(cnn_basenet.CNNBaseModel):
 
         with tf.variable_scope(name):
             # First batch norm
-            bn = self.layerbn(inputdata=inputdata, is_training=self._is_training, name='bn')
+            output = self.layerbn(inputdata=inputdata, is_training=self._is_training, name='bn')
 
             # Second 1*1 conv
             if self._with_bc:
@@ -189,8 +183,8 @@ class DenseNet(cnn_basenet.CNNBaseModel):
             else:
                 out_channels = input_channels
 
-            conv = self.conv2d(
-                inputdata=bn,
+            output = self.conv2d(
+                inputdata=output,
                 out_channel=out_channels,
                 kernel_size=1,
                 stride=1,
@@ -198,13 +192,13 @@ class DenseNet(cnn_basenet.CNNBaseModel):
                 name='conv'
             )
             # Third average pooling
-            avgpool_out = self.avgpooling(
-                inputdata=conv,
+            output = self.avgpooling(
+                inputdata=output,
                 kernel_size=2,
                 stride=2,
                 name='avgpool'
             )
-            return avgpool_out
+            return output
 
     def _dense_block(self, inputdata, name, block_depth):
         """
