@@ -36,5 +36,5 @@ cnn models used for image classification
 
 |  机器ip   | 模型名称  |  Total Epoch   | WarmUp Epoch  |  Init LR   |  BS  | Optimizer  |  Eval Stat/Epoch |
 |  ----  | :----:  |  :----:  | :----:  |  :----:  | :----: | :----:  |  :----:  |
-| .42.199 | Res2Net | 128 | 5 | 0.025 | 24  | SGD | None / None |
+| .42.199 | Res2Net | 128 | 5 | 0.025 | 24  | SGD | 0.51449 / 4 |
 | .42.212 | MobileNetV2 | 128 | 5 | 0.05 | 64 | SGD | 0.65941 / 32 |
