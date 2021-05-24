@@ -43,6 +43,9 @@ class MobileNetV2(cnn_basenet.CNNBaseModel):
         if self._enable_ohem:
             self._ohem_score_thresh = self._cfg.SOLVER.OHEM.SCORE_THRESH
             self._ohem_min_sample_nums = self._cfg.SOLVER.OHEM.MIN_SAMPLE_NUMS
+        self._enable_dropout = self._cfg.TRAIN.DROPOUT.ENABLE
+        if self._enable_dropout:
+            self._dropout_keep_prob = self._cfg.TRAIN.DROPOUT.KEEP_PROB
 
         # build bottleneck hyper params
         self._bottleneck_hyper_params = self._build_bottleneck_layers_hyper_params()
@@ -210,6 +213,16 @@ class MobileNetV2(cnn_basenet.CNNBaseModel):
                 inputdata=output_tensor,
                 name='global_average_pooling'
             )
+            if self._enable_dropout:
+                output_tensor = tf.cond(
+                    self._is_training,
+                    true_fn=lambda: self.dropout(
+                        inputdata=output_tensor,
+                        keep_prob=self._dropout_keep_prob,
+                        name='dropout_train'
+                    ),
+                    false_fn=lambda: tf.identity(output_tensor, name='dropout_test')
+                )
             output_tensor = self.fullyconnect(
                 inputdata=output_tensor,
                 out_dim=self._class_nums,

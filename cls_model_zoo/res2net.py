@@ -239,6 +239,9 @@ class Res2Net(resnet_utils.ResnetBase):
         self._weights_decay = self._cfg.SOLVER.WEIGHT_DECAY
         self._loss_type = self._cfg.SOLVER.LOSS_TYPE
         self._loss_func = getattr(loss, '{:s}_loss'.format(self._loss_type))
+        self._enable_dropout = self._cfg.TRAIN.DROPOUT.ENABLE
+        if self._enable_dropout:
+            self._dropout_keep_prob = self._cfg.TRAIN.DROPOUT.KEEP_PROB
 
     def _is_net_for_training(self):
         """
@@ -352,7 +355,7 @@ class Res2Net(resnet_utils.ResnetBase):
 
         :param input_tensor:
         :param name:
-        :param resue:
+        :param reuse:
         :return:
         """
         with tf.variable_scope(name_or_scope=name, reuse=reuse):
@@ -387,6 +390,16 @@ class Res2Net(resnet_utils.ResnetBase):
                 inputdata=ouptut_tensor,
                 name='global_average_pooling'
             )
+            if self._enable_dropout:
+                output_tensor = tf.cond(
+                    self._is_training,
+                    true_fn=lambda: self.dropout(
+                        inputdata=output_tensor,
+                        keep_prob=self._dropout_keep_prob,
+                        name='dropout_train'
+                    ),
+                    false_fn=lambda: tf.identity(output_tensor, name='dropout_test')
+                )
             final_logits = self.fullyconnect(
                 inputdata=output_tensor,
                 out_dim=self._class_nums,

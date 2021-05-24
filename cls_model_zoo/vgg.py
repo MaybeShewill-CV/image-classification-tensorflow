@@ -40,6 +40,9 @@ class Vgg(cnn_basenet.CNNBaseModel):
         self._vgg_net_size = self._cfg.MODEL.VGG.NET_SIZE
         self._block_size = self._get_block_sizes()
         self._block_channles = [64, 128, 256, 512, 512]
+        self._enable_dropout = self._cfg.TRAIN.DROPOUT.ENABLE
+        if self._enable_dropout:
+            self._dropout_keep_prob = self._cfg.TRAIN.DROPOUT.KEEP_PROB
 
     def _is_net_for_training(self):
         """
@@ -164,6 +167,16 @@ class Vgg(cnn_basenet.CNNBaseModel):
                 out_dim=4096,
                 name='fc_2'
             )
+            if self._enable_dropout:
+                output = tf.cond(
+                    self._is_training,
+                    true_fn=lambda: self.dropout(
+                        inputdata=output,
+                        keep_prob=self._dropout_keep_prob,
+                        name='dropout_train'
+                    ),
+                    false_fn=lambda: tf.identity(output, name='dropout_test')
+                )
             logits = self.fullyconnect(
                 inputdata=output,
                 out_dim=self._class_nums,

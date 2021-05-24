@@ -46,6 +46,9 @@ class ResNet(resnet_utils.ResnetBase):
         self._loss_func = getattr(loss, '{:s}_loss'.format(self._loss_type))
         self._weights_decay = self._cfg.SOLVER.WEIGHT_DECAY
         self._class_nums = self._cfg.DATASET.NUM_CLASSES
+        self._enable_dropout = self._cfg.TRAIN.DROPOUT.ENABLE
+        if self._enable_dropout:
+            self._dropout_keep_prob = self._cfg.TRAIN.DROPOUT.KEEP_PROB
 
     def _init_phase(self):
         """
@@ -183,6 +186,16 @@ class ResNet(resnet_utils.ResnetBase):
                 inputdata=inputs,
                 name='global_average_pooling'
             )
+            if self._enable_dropout:
+                output_tensor = tf.cond(
+                    self._is_training,
+                    true_fn=lambda: self.dropout(
+                        inputdata=output_tensor,
+                        keep_prob=self._dropout_keep_prob,
+                        name='dropout_train'
+                    ),
+                    false_fn=lambda: tf.identity(output_tensor, name='dropout_test')
+                )
             final_logits = self.fullyconnect(
                 inputdata=output_tensor,
                 out_dim=self._class_nums,

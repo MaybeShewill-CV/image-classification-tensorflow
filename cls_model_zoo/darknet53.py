@@ -9,7 +9,6 @@
 add darknet model
 """
 import time
-import collections
 
 import numpy as np
 import tensorflow as tf
@@ -41,6 +40,9 @@ class DarkNet53(cnn_basenet.CNNBaseModel):
         self._loss_func = getattr(loss, '{:s}_loss'.format(self._loss_type))
         self._class_nums = self._cfg.DATASET.NUM_CLASSES
         self._weights_decay = self._cfg.SOLVER.WEIGHT_DECAY
+        self._enable_dropout = self._cfg.TRAIN.DROPOUT.ENABLE
+        if self._enable_dropout:
+            self._dropout_keep_prob = self._cfg.TRAIN.DROPOUT.KEEP_PROB
 
     def _is_net_for_training(self):
         """
@@ -200,17 +202,27 @@ class DarkNet53(cnn_basenet.CNNBaseModel):
                     name='conv_stage_{:d}'.format(index + 1)
                 )
 
-            result = self.globalavgpooling(
+            output_tensor = self.globalavgpooling(
                 inputdata=output_tensor,
                 name='global_average_pooling'
             )
-            result = self.fullyconnect(
-                inputdata=result,
+            if self._enable_dropout:
+                output_tensor = tf.cond(
+                    self._is_training,
+                    true_fn=lambda: self.dropout(
+                        inputdata=output_tensor,
+                        keep_prob=self._dropout_keep_prob,
+                        name='dropout_train'
+                    ),
+                    false_fn=lambda: tf.identity(output_tensor, name='dropout_test')
+                )
+            output_tensor = self.fullyconnect(
+                inputdata=output_tensor,
                 out_dim=self._class_nums,
                 name='final_logits'
             )
 
-        return result
+        return output_tensor
 
     def inference(self, input_tensor, name, reuse=False):
         """
