@@ -9,7 +9,7 @@ AUG:
     SCALE_STEP_SIZE: 0.25  # for stepscaling
     TRAIN_CROP_SIZE: [224, 224]  # crop size for training
     EVAL_CROP_SIZE: [224, 224]  # crop size for evaluating
-    MIRROR: False
+    MIRROR: True
     FLIP: False
     FLIP_RATIO: 0.5
     RICH_CROP:
@@ -51,7 +51,7 @@ TRAIN:
         SNAPSHOT_PATH: ''
     SNAPSHOT_EPOCH: 4
     BATCH_SIZE: 32
-    EPOCH_NUMS: 193
+    EPOCH_NUMS: 129
     WARM_UP:
         ENABLE: False
         EPOCH_NUMS: 5
@@ -62,8 +62,11 @@ TRAIN:
         MULTI_PROCESSOR_NUMS: 6
         SHUFFLE_BUFFER_SIZE: 512
         PREFETCH_SIZE: 16
+    DROPOUT:
+        ENABLE: False
+        KEEP_PROB: 0.5
 SOLVER:
-    LR: 0.0125
+    LR: 0.01
     LR_POLICY: 'cos'
     POLY_DECAY:
         LR_POLYNOMIAL_POWER: 0.95

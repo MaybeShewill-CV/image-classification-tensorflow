@@ -10,7 +10,7 @@ AUG:
     TRAIN_CROP_SIZE: [224, 224]  # crop size for training
     EVAL_CROP_SIZE: [224, 224]  # crop size for evaluating
     MIRROR: True
-    FLIP: True
+    FLIP: False
     FLIP_RATIO: 0.5
     RICH_CROP:
         ENABLE: False
@@ -45,39 +45,42 @@ MODEL:
 TEST:
     TEST_MODEL: 'model/resnet/final'
 TRAIN:
-    MODEL_SAVE_DIR: 'model/resnet_ilsvrc_2012/'
-    TBOARD_SAVE_DIR: 'tboard/resnet_ilsvrc_2012/'
+    MODEL_SAVE_DIR: 'model/resnet50_ilsvrc_2012/'
+    TBOARD_SAVE_DIR: 'tboard/resnet50_ilsvrc_2012/'
     MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
         ENABLE: False
         SNAPSHOT_PATH: ''
     SNAPSHOT_EPOCH: 4
     BATCH_SIZE: 32
-    EPOCH_NUMS: 129
+    EPOCH_NUMS: 193
     WARM_UP:
-        ENABLE: True
+        ENABLE: False
         EPOCH_NUMS: 5
     FREEZE_BN:
         ENABLE: False
     FAST_DATA_PROVIDER:
         ENABLE: True
-        MULTI_PROCESSOR_NUMS: 8
+        MULTI_PROCESSOR_NUMS: 6
         SHUFFLE_BUFFER_SIZE: 512
         PREFETCH_SIZE: 16
+    DROPOUT:
+        ENABLE: False
+        KEEP_PROB: 0.3
 SOLVER:
-    LR: 0.01
+    LR: 0.0075
     LR_POLICY: 'cos'
     POLY_DECAY:
         LR_POLYNOMIAL_POWER: 0.95
         LR_POLYNOMIAL_END_LR: 0.000001
     EXP_DECAY:
-        DECAY_RATE: 0.1
-        APPLY_STAIRCASE: True
+        DECAY_RATE: 0.01
+        APPLY_STAIRCASE: False
     COS_DECAY:
         ALPHA: 0.0
     OPTIMIZER: 'sgd'
     MOMENTUM: 0.9
-    WEIGHT_DECAY: 0.0005
+    WEIGHT_DECAY: 0.0001
     MOVING_AVE_DECAY: 0.9995
     LOSS_TYPE: 'cross_entropy'
 GPU:

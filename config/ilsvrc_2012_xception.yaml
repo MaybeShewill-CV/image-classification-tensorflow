@@ -65,6 +65,9 @@ TRAIN:
         MULTI_PROCESSOR_NUMS: 6
         SHUFFLE_BUFFER_SIZE: 512
         PREFETCH_SIZE: 16
+    DROPOUT:
+        ENABLE: False
+        KEEP_PROB: 0.3
 SOLVER:
     LR: 0.045
     LR_POLICY: 'poly'
