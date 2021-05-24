@@ -397,7 +397,6 @@ class CNNBaseModel(metaclass=ABCMeta):
         :param scale
         :return:
         """
-
         return tf.layers.batch_normalization(
             inputs=inputdata,
             training=is_training,
