@@ -256,7 +256,7 @@ class CNNBaseModel(metaclass=ABCMeta):
         :param inputdata:
         :param data_format:
         :param name:
-        :param keep_dims:
+        :param keepdims:
         :return:
         """
         assert inputdata.shape.ndims == 4
