@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2021/3/31 下午5:24
 # @Author  : MaybeShewill-CV
-# @Site    : ICode
-# @File    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
+# @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
+# @File    : repvgg_bak.py
 # @IDE: PyCharm
 """
 origin
