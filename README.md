@@ -14,27 +14,28 @@ cnn models used for image classification
 
 |  机器ip   | 模型名称  |  Total Epoch   | WarmUp Epoch  |  Init LR   |  BS  | Optimizer  |  Eval Stat/Epoch |
 |  ----  | :----:  |  :----:  | :----:  |  :----:  | :----: | :----:  |  :----:  |
-| .42.198 | Xception | 128 | 5 | 0.05 | 24 | SGD | 0.70528 / 20 |
+| .42.198 | Xception | 128 | 5 | 0.05 | 24 | SGD | 0.70844 / 28 |
 | .42.202 | VGG-16 | 192 | 5 | 0.0125 | 32 | SGD | 0.71460 / 192 |
 | .42.203 | ResNet-101 | 192 | 5 | 0.0125 | 32 | SGD | 0.75043/ 192 |
 | .42.204 | DenseNet-121 | 192 | 5 | 0.0125 | 32 | SGD | 0.69875 / 192 |
 | .42.211 | ResNet-50 | 192 | 5 | 0.0125 | 32 | SGD | 0.74475 / 192 |
 | .42.212 | MobileNetV2 | 192 | 5 | 0.03 | 64 | SGD | 0.69936 / 192 |
-| .58.27 | DarkNet53 | 128 | 5 | 0.01 | 32 | SGD | 0.71217 / 64 |
+| .58.27 | DarkNet53 | 128 | 5 | 0.01 | 32 | SGD | 0.72252 / 68 |
 
 |  机器ip   | 模型名称  |  Total Epoch   | WarmUp Epoch  |  Init LR   |  BS  | Optimizer  |  Eval Stat/Epoch |
 |  ----  | :----:  |  :----:  | :----:  |  :----:  | :----: | :----:  |  :----:  |
-| .42.202 | VGG-16 | 96 | 5 | 0.01 | 32 | SGD | 0.71285 / 88 |
-| .42.203 | ResNet-101 | 128 | 5 | 0.025 | 32 | SGD | 0.50940/ 12 |
+| .42.202 | VGG-16 | 96 | 5 | 0.01 | 32 | SGD | 0.71428 / 96 |
+| .42.203 | ResNet-101 | 128 | 5 | 0.025 | 32 | SGD | 0.51310/ 16 |
 | .42.204 | DenseNet-121 | 96 | None | 0.0075 | 16 | SGD | 0.70624 / 96 |
 | .42.211 | ResNet-50 | 128 | 5 | 0.0075 | 24 | SGD | 0.74500 / 128 |
 | .42.212 | MobileNetV2 | 192 | 5 | 0.02 | 64 | SGD | 0.69417 / 192 |
 
 |  机器ip   | 模型名称  |  Total Epoch   | WarmUp Epoch  |  Init LR   |  BS  | Optimizer  |  Eval Stat/Epoch |
 |  ----  | :----:  |  :----:  | :----:  |  :----:  | :----: | :----:  |  :----:  |
-| .42.199 | Res2Net | 128 | 5 | 0.02 | 24  | SGD | 0.68978 / 44 |
-| .42.204 | DenseNet-121 | 128 | 5 | 0.025 | 32 | SGD | 0.69290 / 104 |
-| .42.211 | ResNet-50 | 128 | 5 | 0.025 | 32 | SGD | 0.69406 / 108 |
+| .42.199 | Res2Net | 128 | 5 | 0.02 | 24  | SGD | 0.69635 / 52 |
+| .42.202 | VGG-16 | 128 | 5 | 0.0125 | 32 | SGD | None / None |
+| .42.204 | DenseNet-121 | 128 | 5 | 0.025 | 32 | SGD | 0.69156 / 120 |
+| .42.211 | ResNet-50 | 128 | 5 | 0.025 | 32 | SGD | 0.74033 / 124 |
 | .42.212 | MobileNetV2 | 96 | None | 0.01 | 64 | SGD | 0.67841 / 96 |
 
 |  机器ip   | 模型名称  |  Total Epoch   | WarmUp Epoch  |  Init LR   |  BS  | Optimizer  |  Eval Stat/Epoch |
@@ -43,4 +44,4 @@ cnn models used for image classification
 
 |  机器ip   | 模型名称  |  Total Epoch   | WarmUp Epoch  |  Init LR   |  BS  | Optimizer  |  Eval Stat/Epoch |
 |  ----  | :----:  |  :----:  | :----:  |  :----:  | :----: | :----:  |  :----:  |
-| .42.212 | MobileNetV2 | 128 | 5 | 0.045 | 64 | SGD | 0.61157 / 28 |
+| .42.212 | MobileNetV2 | 128 | 5 | 0.045 | 64 | SGD | 0.61478 / 44 |
