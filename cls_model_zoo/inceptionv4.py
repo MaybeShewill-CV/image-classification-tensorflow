@@ -914,7 +914,7 @@ def _model_profile():
     tf.reset_default_graph()
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_inceptionv4.yaml')
     test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 224, 224, 3], name='test_input')
-    model = get_model(phase='train', cfg=cfg)
+    model = get_model(phase='test', cfg=cfg)
     _ = model.inference(input_tensor=test_input_tensor, name='InceptionV4', reuse=False)
 
     with tf.Session() as sess:
