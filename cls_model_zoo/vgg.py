@@ -144,6 +144,9 @@ class Vgg(cnn_basenet.CNNBaseModel):
                     conv_nums=conv_nums,
                     name=block_name
                 )
+            batch_size = output.get_shape().as_list()[0]
+            output_channles = output.get_shape().as_list()[-1]
+            output.set_shape([batch_size, 7, 7, output_channles])
             output = self.fullyconnect(
                 inputdata=output,
                 out_dim=4096,
