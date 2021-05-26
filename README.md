@@ -25,7 +25,7 @@ cnn models used for image classification
 |  机器ip   | 模型名称  |  Total Epoch   | WarmUp Epoch  |  Init LR   |  BS  | Optimizer  |  Eval Stat/Epoch |
 |  ----  | :----:  |  :----:  | :----:  |  :----:  | :----: | :----:  |  :----:  |
 | .42.202 | VGG-16 | 96 | 5 | 0.01 | 32 | SGD | 0.71428 / 96 |
-| .42.203 | ResNet-101 | 128 | 5 | 0.025 | 32 | SGD | 0.52650/ 28 |
+| .42.203 | ResNet-101 | 128 | 5 | 0.025 | 32 | SGD | 0.52677/ 32 |
 | .42.204 | DenseNet-121 | 96 | None | 0.0075 | 16 | SGD | 0.70624 / 96 |
 | .42.211 | ResNet-50 | 128 | 5 | 0.0075 | 24 | SGD | 0.74500 / 128 |
 | .42.212 | MobileNetV2 | 192 | 5 | 0.02 | 64 | SGD | 0.69417 / 192 |
