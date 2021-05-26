@@ -360,14 +360,15 @@ def _stats_graph(graph):
     return
 
 
-def test():
+def _inference_time_profile():
     """
 
     :return:
     """
+    tf.reset_default_graph()
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_densenet.yaml')
-    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
-    test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 224, 224, 3], name='test_input')
+    test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[1], name='test_label')
     model = get_model(phase='train', cfg=cfg)
     test_result = model.compute_loss(
         input_tensor=test_input_tensor,
@@ -382,8 +383,6 @@ def test():
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
 
-        _stats_graph(sess.graph)
-
         test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
         t_start = time.time()
         loop_times = 1000
@@ -396,8 +395,28 @@ def test():
     print('Complete')
 
 
+def _model_profile():
+    """
+
+    :return:
+    """
+    tf.reset_default_graph()
+    cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_densenet.yaml')
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 224, 224, 3], name='test_input')
+    model = get_model(phase='train', cfg=cfg)
+    _ = model.inference(input_tensor=test_input_tensor, name='DenseNet', reuse=False)
+
+    with tf.Session() as sess:
+        _stats_graph(sess.graph)
+
+    print('Complete')
+
+
+
 if __name__ == '__main__':
     """
     test code
     """
-    test()
+    _model_profile()
+
+    _inference_time_profile()
