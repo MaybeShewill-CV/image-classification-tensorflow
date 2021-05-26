@@ -1,0 +1,92 @@
+AUG:
+    RESIZE_METHOD: 'unpadding' # choice unpadding rangescaling and stepscaling
+    FIX_RESIZE_SIZE: [256, 256] # (width, height), for unpadding
+    INF_RESIZE_VALUE: 500  # for rangescaling
+    MAX_RESIZE_VALUE: 600  # for rangescaling
+    MIN_RESIZE_VALUE: 400  # for rangescaling
+    MAX_SCALE_FACTOR: 2.0  # for stepscaling
+    MIN_SCALE_FACTOR: 0.75  # for stepscaling
+    SCALE_STEP_SIZE: 0.25  # for stepscaling
+    TRAIN_CROP_SIZE: [224, 224]  # crop size for training
+    EVAL_CROP_SIZE: [224, 224]  # crop size for evaluating
+    MIRROR: True
+    FLIP: False
+    FLIP_RATIO: 0.5
+    RICH_CROP:
+        ENABLE: False
+        BLUR: True
+        BLUR_RATIO: 0.2
+        MAX_ROTATION: 15
+        MIN_AREA_RATIO: 0.5
+        ASPECT_RATIO: 0.5
+        BRIGHTNESS_JITTER_RATIO: 0.5
+        CONTRAST_JITTER_RATIO: 0.5
+        SATURATION_JITTER_RATIO: 0.5
+DATASET:
+    DATASET_NAME: 'ilsvrc_2012'
+    DATA_DIR: './data/ilsvrc_2012_dataset'
+    IMAGE_TYPE: 'rgb'  # choice rgb or rgba
+    NUM_CLASSES: 1000
+    TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
+    TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
+    VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
+    IGNORE_INDEX: 255
+    PADDING_VALUE: [0, 0, 0]
+    MEAN_VALUE: [123.68, 116.779, 103.939]
+    STD_VALUE: [58.393, 57.12, 57.375]
+    USE_ONE_HOT_LABEL: False
+FREEZE:
+    MODEL_FILENAME: 'model'
+    PARAMS_FILENAME: 'params'
+MODEL:
+    MODEL_NAME: 'se-resnet'
+    SE_RESNET:
+        NET_SIZE: 50
+        REDUCTION: 16
+TEST:
+    TEST_MODEL: 'model/se-resnet/final'
+TRAIN:
+    MODEL_SAVE_DIR: 'model/se-resnet_ilsvrc_2012/'
+    TBOARD_SAVE_DIR: 'tboard/se-resnet_ilsvrc_2012/'
+    MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
+    RESTORE_FROM_SNAPSHOT:
+        ENABLE: False
+        SNAPSHOT_PATH: ''
+    SNAPSHOT_EPOCH: 4
+    BATCH_SIZE: 32
+    EPOCH_NUMS: 129
+    WARM_UP:
+        ENABLE: False
+        EPOCH_NUMS: 5
+    FREEZE_BN:
+        ENABLE: False
+    FAST_DATA_PROVIDER:
+        ENABLE: True
+        MULTI_PROCESSOR_NUMS: 6
+        SHUFFLE_BUFFER_SIZE: 512
+        PREFETCH_SIZE: 16
+    DROPOUT:
+        ENABLE: True
+        KEEP_PROB: 0.8
+SOLVER:
+    LR: 0.01
+    LR_POLICY: 'cos'
+    POLY_DECAY:
+        LR_POLYNOMIAL_POWER: 0.95
+        LR_POLYNOMIAL_END_LR: 0.000001
+    EXP_DECAY:
+        DECAY_RATE: 0.1
+        APPLY_STAIRCASE: True
+    COS_DECAY:
+        ALPHA: 0.0
+    OPTIMIZER: 'sgd'
+    MOMENTUM: 0.9
+    WEIGHT_DECAY: 0.0001
+    MOVING_AVE_DECAY: 0.9995
+    LOSS_TYPE: 'cross_entropy'
+GPU:
+    GPU_MEMORY_FRACTION: 0.9
+    TF_ALLOW_GROWTH: True
+LOG:
+    SAVE_DIR: './log'
+    LEVEL: INFO
