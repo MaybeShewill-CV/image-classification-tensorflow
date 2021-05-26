@@ -89,7 +89,7 @@ class Vgg(cnn_basenet.CNNBaseModel):
             output = self.conv2d(
                 inputdata=input_tensor, out_channel=out_dims,
                 kernel_size=k_size, stride=stride,
-                use_bias=False, padding=padding, name='conv'
+                use_bias=True, padding=padding, name='conv'
             )
 
             if need_layer_norm:
@@ -122,7 +122,7 @@ class Vgg(cnn_basenet.CNNBaseModel):
                     need_layer_norm=True,
                     name='conv_stage_{:d}'.format(i + 1)
                 )
-            output = self.maxpooling(inputdata=output, kernel_size=3, stride=2, name='maxpooling')
+            output = self.maxpooling(inputdata=output, kernel_size=2, stride=2, name='maxpooling')
 
         return output
 
@@ -144,19 +144,6 @@ class Vgg(cnn_basenet.CNNBaseModel):
                     conv_nums=conv_nums,
                     name=block_name
                 )
-            output = self.globalavgpooling(
-                inputdata=output,
-                name='global_average_pooling',
-                keepdims=True
-            )
-            output = self._conv_stage(
-                input_tensor=output,
-                k_size=1,
-                out_dims=2048,
-                name='fc_conv',
-                stride=1,
-                need_layer_norm=True
-            )
             output = self.fullyconnect(
                 inputdata=output,
                 out_dim=4096,
@@ -267,8 +254,8 @@ def _test():
     :return:
     """
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_vgg.yaml')
-    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[None, 224, 224, 3], name='test_input')
-    test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[None], name='test_label')
+    test_input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 224, 224, 3], name='test_input')
+    test_label_tensor = tf.placeholder(dtype=tf.int32, shape=[1], name='test_label')
     model = get_model(phase='train', cfg=cfg)
     test_result = model.compute_loss(
         input_tensor=test_input_tensor,
