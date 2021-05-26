@@ -149,20 +149,32 @@ class Vgg(cnn_basenet.CNNBaseModel):
                 out_dim=4096,
                 name='fc_1'
             )
-            output = self.fullyconnect(
-                inputdata=output,
-                out_dim=4096,
-                name='fc_2'
-            )
+            output = self.relu(output, name='fc_1_relu')
             if self._enable_dropout:
                 output = tf.cond(
                     self._is_training,
                     true_fn=lambda: self.dropout(
                         inputdata=output,
                         keep_prob=self._dropout_keep_prob,
-                        name='dropout_train'
+                        name='fc_1_dropout_train'
                     ),
-                    false_fn=lambda: tf.identity(output, name='dropout_test')
+                    false_fn=lambda: tf.identity(output, name='fc_1_dropout_test')
+                )
+            output = self.fullyconnect(
+                inputdata=output,
+                out_dim=4096,
+                name='fc_2'
+            )
+            output = self.relu(output, name='fc_2_relu')
+            if self._enable_dropout:
+                output = tf.cond(
+                    self._is_training,
+                    true_fn=lambda: self.dropout(
+                        inputdata=output,
+                        keep_prob=self._dropout_keep_prob,
+                        name='fc_2_dropout_train'
+                    ),
+                    false_fn=lambda: tf.identity(output, name='fc_2_dropout_test')
                 )
             logits = self.fullyconnect(
                 inputdata=output,
