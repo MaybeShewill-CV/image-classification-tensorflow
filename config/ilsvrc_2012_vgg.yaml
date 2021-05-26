@@ -65,8 +65,8 @@ TRAIN:
         SHUFFLE_BUFFER_SIZE: 512
         PREFETCH_SIZE: 16
     DROPOUT:
-        ENABLE: False
-        KEEP_PROB: 0.3
+        ENABLE: True
+        KEEP_PROB: 0.5
 SOLVER:
     LR: 0.01
     LR_POLICY: 'poly'
