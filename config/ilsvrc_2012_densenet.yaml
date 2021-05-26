@@ -45,6 +45,7 @@ MODEL:
         BLOCK_NUMS: 4
         ENABLE_BC: True
         BC_THETA: 0.5
+        COMPOSITE_CHANNELS: 128
         NET_SIZE: 121
 TEST:
     TEST_MODEL: 'model/mobilenetv2/final'

@@ -39,6 +39,7 @@ class DenseNet(cnn_basenet.CNNBaseModel):
         self._growth_rate = self._cfg.MODEL.DENSENET.GROWTH_RATE
         self._with_bc = self._cfg.MODEL.DENSENET.ENABLE_BC
         self._bc_theta = self._cfg.MODEL.DENSENET.BC_THETA
+        self._composite_channels = self._cfg.MODEL.DENSENET.COMPOSITE_CHANNELS
 
         self._loss_type = self._cfg.SOLVER.LOSS_TYPE.lower()
         self._loss_func = getattr(loss, '{:s}_loss'.format(self._loss_type))
@@ -133,7 +134,7 @@ class DenseNet(cnn_basenet.CNNBaseModel):
 
             if self._with_bc:
                 output = self.conv2d(
-                    inputdata=output, out_channel=out_channel,
+                    inputdata=output, out_channel=self._composite_channels,
                     kernel_size=1, padding='SAME', stride=1, use_bias=False, name='conv_1'
                 )
                 output = self.layerbn(inputdata=output, is_training=self._is_training, name='bn_2')
