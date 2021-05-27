@@ -24,12 +24,12 @@ AUG:
         SATURATION_JITTER_RATIO: 0.5
 DATASET:
     DATASET_NAME: 'ilsvrc_2012'
-    DATA_DIR: './data/ilsvrc_2012_dataset'
+    DATA_DIR: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC_2012'
     IMAGE_TYPE: 'rgb'  # choice rgb or rgba
     NUM_CLASSES: 1000
-    TEST_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/test.txt'
-    TRAIN_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/train.txt'
-    VAL_FILE_LIST: './data/ilsvrc_2012_dataset/image_file_index/val.txt'
+    TEST_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC_2012/image_file_index/test.txt'
+    TRAIN_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC_2012/image_file_index/train.txt'
+    VAL_FILE_LIST: '/media/baidu/DataRepo/IMAGE_CLASSIFICATION/ILSVRC_2012/image_file_index/val.txt'
     IGNORE_INDEX: 255
     PADDING_VALUE: [0, 0, 0]
     MEAN_VALUE: [123.68, 116.779, 103.939]
@@ -47,8 +47,8 @@ TRAIN:
     TBOARD_SAVE_DIR: 'tboard/darknet53_ilsvrc_2012/'
     MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
-        ENABLE: False
-        SNAPSHOT_PATH: ''
+        ENABLE: True
+        SNAPSHOT_PATH: './model/darknet53_ilsvrc_2012/darknet53_val_acc=0.6881.ckpt-68'
     SNAPSHOT_EPOCH: 4
     BATCH_SIZE: 32
     EPOCH_NUMS: 129
@@ -63,8 +63,8 @@ TRAIN:
         SHUFFLE_BUFFER_SIZE: 512
         PREFETCH_SIZE: 16
     DROPOUT:
-        ENABLE: False
-        KEEP_PROB: 0.5
+        ENABLE: True
+        KEEP_PROB: 0.8
 SOLVER:
     LR: 0.01
     LR_POLICY: 'cos'
@@ -82,7 +82,7 @@ SOLVER:
     MOVING_AVE_DECAY: 0.9995
     LOSS_TYPE: 'cross_entropy'
 GPU:
-    GPU_MEMORY_FRACTION: 0.9
+    GPU_MEMORY_FRACTION: 0.99
     TF_ALLOW_GROWTH: True
 LOG:
     SAVE_DIR: './log'
