@@ -79,6 +79,9 @@ SOLVER:
         APPLY_STAIRCASE: True
     COS_DECAY:
         ALPHA: 0.0
+    PIECEWISE_DECAY:
+        DECAY_RATE: 0.1
+        DECAY_BOUNDARY: [30.0, 60.0, 90.0, 120.0]
     OPTIMIZER: 'sgd'
     MOMENTUM: 0.9
     WEIGHT_DECAY: 0.0001
