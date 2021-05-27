@@ -126,6 +126,48 @@ class _CosineDecay(object):
         return lr
 
 
+class _PiecewiseDecay(object):
+    """
+    piecewise decay
+    """
+    def __init__(self, initial_learning_rate, decay_rate, decay_boundary_epoch, name=None):
+        """
+
+        :param initial_learning_rate:
+        :param decay_rate:
+        :param decay_boundary:
+        :param name:
+        """
+        self._initial_learning_rate = initial_learning_rate
+        self._decay_rate = decay_rate
+        self._decay_boundary_epoch = decay_boundary_epoch
+        self._name = name
+
+    def __call__(self, global_step, decay_steps, *args, **kwargs):
+        """
+
+        :param global_step:
+        :param decay_steps:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        steps_per_epoch = kwargs['steps_per_epoch']
+        values = [self._initial_learning_rate]
+        boundaries = []
+        for index, epoch in enumerate(self._decay_boundary_epoch):
+            boundaries.append(epoch * steps_per_epoch)
+            values.append(self._initial_learning_rate * self._decay_rate ** (index + 1))
+
+        lr = tf.train.piecewise_constant_decay(
+            x=global_step,
+            boundaries=boundaries,
+            values=values,
+            name=self._name
+        )
+        return lr
+
+
 class LrScheduler(object):
     """
 
@@ -158,6 +200,13 @@ class LrScheduler(object):
                 alpha=self._cfg.SOLVER.COS_DECAY.ALPHA,
                 name='cos_decay_scheduler'
             )
+        elif self._lr_scheduler_type.lower() == 'piecewise':
+            self._lr_scheduler = _PiecewiseDecay(
+                initial_learning_rate=self._init_lr,
+                decay_rate=self._cfg.SOLVER.PIECEWISE_DECAY.DECAY_RATE,
+                decay_boundary_epoch=self._cfg.SOLVER.PIECEWISE_DECAY.DECAY_BOUNDARY,
+                name='piecewise_decay_scheduler'
+            )
         else:
             raise NotImplementedError('Not supported lr scheduler type of {:s}'.format(self._lr_scheduler_type))
 
@@ -172,7 +221,9 @@ class LrScheduler(object):
         """
         lr = self._lr_scheduler(
             global_step=global_step,
-            decay_steps=decay_steps
+            decay_steps=decay_steps,
+            *args,
+            **kwargs
         )
 
         return lr
@@ -191,24 +242,25 @@ def _test():
     global_update = tf.assign_add(global_step, tf.constant(1.0))
 
     with tf.control_dependencies([global_update]):
-        lr = lr_scheduler(decay_steps=decay_steps, global_step=global_step)
+        lr = lr_scheduler(decay_steps=decay_steps, global_step=global_step, steps_per_epoch=4000)
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         train_steps = 4000 * 128
         lrs = []
         for i in range(train_steps):
-            lrs.append(sess.run(lr, feed_dict={decay_steps: 4000.0 * 128}))
+            lrs.append(sess.run(lr, feed_dict={decay_steps: train_steps}))
         print('Global step: {}'.format(sess.run(global_step)))
         print('Complete tf calculate')
         x = np.linspace(0, train_steps, train_steps)
         plt.plot(x, lrs)
+        print(np.unique(lrs))
 
         sess.run(tf.global_variables_initializer())
         train_steps = 4000 * 192
         lrs = []
         for i in range(train_steps):
-            lrs.append(sess.run(lr, feed_dict={decay_steps: 4000.0 * 192}))
+            lrs.append(sess.run(lr, feed_dict={decay_steps: train_steps}))
         print('Global step: {}'.format(sess.run(global_step)))
         print('Complete tf calculate')
         x = np.linspace(0, train_steps, train_steps)

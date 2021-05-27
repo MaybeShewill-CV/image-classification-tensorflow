@@ -142,7 +142,11 @@ class BaseClsTrainner(object):
             self._learn_rate = tf.cond(
                 pred=self._global_step < warmup_steps,
                 true_fn=lambda: self._global_step / warmup_steps * self._init_learning_rate,
-                false_fn=lambda: self._lr_scheduler(global_step=self._global_step, decay_steps=train_steps)
+                false_fn=lambda: self._lr_scheduler(
+                    global_step=self._global_step,
+                    decay_steps=train_steps,
+                    steps_per_epoch=self._steps_per_epoch
+                )
             )
             global_step_update = tf.assign_add(self._global_step, 1.0)
             val_global_step_update = tf.assign_add(self._val_global_step, 1.0)
