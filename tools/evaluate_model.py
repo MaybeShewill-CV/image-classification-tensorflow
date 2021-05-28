@@ -11,6 +11,7 @@ evaluate model
 import argparse
 import time
 import os.path as ops
+import math
 
 import tqdm
 import tensorflow as tf
@@ -45,6 +46,7 @@ def init_args():
     parser.add_argument('--need_shuffle', type=args_str2bool, default=True)
     parser.add_argument('--plot_precision_recall_curve', type=args_str2bool, default=False)
     parser.add_argument('--need_details_report', type=args_str2bool, default=False)
+    parser.add_argument('--apply_aspect_ratio_center_crop', type=args_str2bool, default=False)
 
     return parser.parse_args()
 
@@ -130,6 +132,35 @@ def calculate_evaluate_statics(labels, predictions, model_name='ilsvrc_2012_xcep
     ))
 
 
+def center_crop(input_image, cfg, apply_aspect_ratio_resize=False):
+    """
+
+    :param input_image:
+    :param apply_aspect_ratio_resize:
+    :param cfg:
+    :return:
+    """
+    assert cfg.AUG.FIX_RESIZE_SIZE[0] >= cfg.AUG.EVAL_CROP_SIZE[0]
+    assert cfg.AUG.FIX_RESIZE_SIZE[1] >= cfg.AUG.EVAL_CROP_SIZE[1]
+    if not apply_aspect_ratio_resize:
+        image = cv2.resize(input_image, tuple(cfg.AUG.FIX_RESIZE_SIZE), interpolation=cv2.INTER_LINEAR)
+    else:
+        shorter_size = min(input_image.shape[0], input_image.shape[1])
+        resize_scale = cfg.AUG.FIX_RESIZE_SIZE[0] / float(shorter_size)
+        image = cv2.resize(
+            input_image,
+            dsize=(int(resize_scale * input_image.shape[1]), int(resize_scale * input_image.shape[0])),
+            interpolation=cv2.INTER_LINEAR
+        )
+
+    dw = int(math.floor((image.shape[1] - cfg.AUG.EVAL_CROP_SIZE[1]) / 2))
+    dh = int(math.floor((image.shape[0] - cfg.AUG.EVAL_CROP_SIZE[0]) / 2))
+
+    image = image[dh:dh + cfg.AUG.EVAL_CROP_SIZE[0], dw:dw + cfg.AUG.EVAL_CROP_SIZE[1], :]
+
+    return image
+
+
 def evaluate():
     """
     eval
@@ -147,6 +178,7 @@ def evaluate():
     dataset_flag = args.dataset_flag
     batch_size = args.batch_size
     need_shuffle = args.need_shuffle
+    apply_aspect_ratio_center_crop = args.apply_aspect_ratio_center_crop
 
     loguru.logger.add(
         './log/{:s}_{:s}_evaluate.log'.format(dataset_name, net_name),
@@ -238,10 +270,14 @@ def evaluate():
             input_images = []
             for image_path in image_batch_paths:
                 input_image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-                # input_image = cv2.blur(input_image, (3, 3))
-                # input_image = cv2.GaussianBlur(input_image, (3, 3), 1.0)
-                input_image = cv2.resize(input_image, tuple(cfg.AUG.FIX_RESIZE_SIZE), interpolation=cv2.INTER_LINEAR)
-                input_image = input_image[16:16 + 224, 16:16 + 224, :]
+
+                # input_image = cv2.resize(input_image, tuple(cfg.AUG.FIX_RESIZE_SIZE), interpolation=cv2.INTER_LINEAR)
+                # input_image = input_image[16:16 + 224, 16:16 + 224, :]
+                input_image = center_crop(
+                    input_image=input_image,
+                    cfg=cfg,
+                    apply_aspect_ratio_resize=apply_aspect_ratio_center_crop
+                )
                 input_image = cv2.cvtColor(input_image, cv2.COLOR_BGR2RGB)
                 input_image = input_image.astype(np.float32)
                 # input_image = input_image / 127.5 - 1.0
