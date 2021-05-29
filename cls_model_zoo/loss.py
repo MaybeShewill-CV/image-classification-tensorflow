@@ -70,13 +70,14 @@ def dice_bce_loss(logits, label_tensor, weight_decay, l2_vars, **kwargs):
     return ret
 
 
-def cross_entropy_loss(logits, label_tensor, weight_decay, l2_vars):
+def cross_entropy_loss(logits, label_tensor, weight_decay, l2_vars, **kwargs):
     """
 
     :param logits:
     :param label_tensor:
     :param weight_decay:
     :param l2_vars:
+    :param kwargs:
     :return:
     """
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
