@@ -96,7 +96,7 @@ def cross_entropy_loss(logits, label_tensor, weight_decay, l2_vars, **kwargs):
             indices=label_tensor,
             depth=kwargs['class_nums'],
             on_value=1.0 - lb_smooth_value,
-            off_value=lb_smooth_value / kwargs['class_nums'],
+            off_value=lb_smooth_value / (kwargs['class_nums'] - 1),
             dtype=tf.float32
         )
         cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(
@@ -104,14 +104,12 @@ def cross_entropy_loss(logits, label_tensor, weight_decay, l2_vars, **kwargs):
             logits=logits,
             name='cross_entropy_per_example'
         )
-        print('Label Smooth')
     else:
         cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
             logits=logits,
             labels=label_tensor,
             name='cross_entropy_per_example'
         )
-        print('Not Label Smooth')
 
     cross_entropy_loss_value = tf.reduce_mean(cross_entropy, name='cross_entropy')
     l2_reg_loss = tf.constant(0.0, tf.float32)

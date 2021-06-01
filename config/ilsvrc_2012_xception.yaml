@@ -68,6 +68,9 @@ TRAIN:
     DROPOUT:
         ENABLE: False
         KEEP_PROB: 0.3
+    LABEL_SMOOTH:
+        ENABLE: False
+        SMOOTH_VALUE: 0.1
 SOLVER:
     LR: 0.045
     LR_POLICY: 'poly'

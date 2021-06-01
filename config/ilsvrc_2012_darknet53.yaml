@@ -47,8 +47,8 @@ TRAIN:
     TBOARD_SAVE_DIR: 'tboard/darknet53_ilsvrc_2012/'
     MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
-        ENABLE: True
-        SNAPSHOT_PATH: './model/darknet53_ilsvrc_2012/darknet53_val_acc=0.6881.ckpt-68'
+        ENABLE: False
+        SNAPSHOT_PATH: ''
     SNAPSHOT_EPOCH: 4
     BATCH_SIZE: 32
     EPOCH_NUMS: 129
@@ -65,6 +65,9 @@ TRAIN:
     DROPOUT:
         ENABLE: True
         KEEP_PROB: 0.8
+    LABEL_SMOOTH:
+        ENABLE: False
+        SMOOTH_VALUE: 0.1
 SOLVER:
     LR: 0.01
     LR_POLICY: 'cos'

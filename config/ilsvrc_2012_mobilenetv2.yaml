@@ -64,7 +64,10 @@ TRAIN:
         PREFETCH_SIZE: 16
     DROPOUT:
         ENABLE: True
-        KEEP_PROB: 0.3
+        KEEP_PROB: 0.5
+    LABEL_SMOOTH:
+        ENABLE: False
+        SMOOTH_VALUE: 0.1
 SOLVER:
     LR: 0.015
     LR_POLICY: 'cos'
