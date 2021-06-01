@@ -242,6 +242,11 @@ class Res2Net(resnet_utils.ResnetBase):
         self._enable_dropout = self._cfg.TRAIN.DROPOUT.ENABLE
         if self._enable_dropout:
             self._dropout_keep_prob = self._cfg.TRAIN.DROPOUT.KEEP_PROB
+        self._enable_label_smooth = self._cfg.TRAIN.LABEL_SMOOTH.ENABLE
+        if self._enable_label_smooth:
+            self._smooth_value = self._cfg.TRAIN.LABEL_SMOOTH.SMOOTH_VALUE
+        else:
+            self._smooth_value = 0.0
 
     def _is_net_for_training(self):
         """
@@ -441,24 +446,15 @@ class Res2Net(resnet_utils.ResnetBase):
         )
 
         with tf.variable_scope('res2net_loss', reuse=reuse):
-            if self._loss_type == 'cross_entropy':
-                ret = self._loss_func(
-                    logits=logits,
-                    label_tensor=label,
-                    weight_decay=self._weights_decay,
-                    l2_vars=tf.trainable_variables(),
-                )
-            elif self._loss_type == 'dice_bce':
-                ret = self._loss_func(
-                    logits=logits,
-                    label_tensor=label,
-                    weight_decay=self._weights_decay,
-                    l2_vars=tf.trainable_variables(),
-                    class_nums=self._class_nums,
-                )
-            else:
-                raise NotImplementedError('Loss of type: {:s} has not been implemented'.format(self._loss_type))
-
+            ret = self._loss_func(
+                logits=logits,
+                label_tensor=label,
+                weight_decay=self._weights_decay,
+                l2_vars=tf.trainable_variables(),
+                use_label_smooth=self._enable_label_smooth,
+                lb_smooth_value=self._smooth_value,
+                class_nums=self._class_nums,
+            )
         return ret
 
 
