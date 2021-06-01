@@ -1,7 +1,7 @@
 # image-classification-tensorflow
 cnn models used for image classification
 
-| 模型 | Top-1 Acc | Top-5 Acc | GTX-1070 time(ms)<br>bs=1 | Flops(G) | Params(M) | 模型大小(M) | 下载地址   |
+| 模型 | Top-1 Acc | Top-5 Acc | GTX-3080 time(ms)<br>bs=1 | Flops(G) | Params(M) | 模型大小(M) | 下载地址   |
 |----------------------------------|-----------|-----------|------------------------|----------|-----------|---------|-----------------------------------------------------------------------------------------------------------|
-| ResNet-50 | 0.7466 | None | 14.3 | 8.23 | 25.54 | 90 | None |
+| ResNet-50 | 0.7466 | None | 8.63 | 8.23 | 25.54 | 90 | None |
 
