@@ -506,7 +506,7 @@ def _inference_time_profile():
 
         test_input = np.random.random((1, 224, 224, 3)).astype(np.float32)
         t_start = time.time()
-        loop_times = 1000
+        loop_times = 5000
         for i in range(loop_times):
             _ = sess.run(tmp_logits, feed_dict={test_input_tensor: test_input})
         t_cost = time.time() - t_start
