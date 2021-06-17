@@ -277,6 +277,119 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
         model_cfg = xception_model_cfg
     else:
         raise NotImplementedError('Not support model: {:s}'.format(net_name))
+    aug_cfg = {
+        'AUG': {
+            'RESIZE_METHOD': 'unpadding'
+        },
+        'FIX_RESIZE_SIZE': [256, 256],
+        'INF_RESIZE_VALUE': 500,
+        'MAX_RESIZE_VALUE': 600,
+        'MIN_RESIZE_VALUE': 400,
+        'MAX_SCALE_FACTOR': 2.0,
+        'MIN_SCALE_FACTOR': 0.75,
+        'SCALE_STEP_SIZE': 0.25,
+        'TRAIN_CROP_SIZE': [224, 224],
+        'EVAL_CROP_SIZE': [224, 224],
+        'MIRROR': True,
+        'FLIP': True,
+        'FLIP_RATIO': 0.5,
+        'RICH_CROP': {
+            'ENABLE': False,
+            'BLUR': True,
+            'BLUR_RATIO': 0.2,
+            'MAX_ROTATION': 15,
+            'MIN_AREA_RATIO': 0.5,
+            'ASPECT_RATIO': 0.5,
+            'BRIGHTNESS_JITTER_RATIO': 0.5,
+            'CONTRAST_JITTER_RATIO': 0.5,
+        }
+    }
+    dataset_cfg = {
+        'DATASET_NAME': 'ilsvrc_2012',
+        'DATA_DIR': './data/ilsvrc_2012_dataset',
+        'IMAGE_TYPE': 'rgb',
+        'NUM_CLASSES': 1000,
+        'TEST_FILE_LIST': './data/ilsvrc_2012_dataset/image_file_index/test.txt',
+        'TRAIN_FILE_LIST': './data/ilsvrc_2012_dataset/image_file_index/train.txt',
+        'VAL_FILE_LIST': './data/ilsvrc_2012_dataset/image_file_index/val.txt',
+        'IGNORE_INDEX': 255,
+        'PADDING_VALUE': [0, 0, 0],
+        'MEAN_VALUE': [123.68, 116.779, 103.939],
+        'STD_VALUE': [58.393, 57.12, 57.375],
+        'USE_ONE_HOT_LABEL': False
+    }
+    freeze_cfg = {
+        'MODEL_FILENAME': 'model',
+        'PARAMS_FILENAME': 'params'
+    }
+    test_cfg = {
+        'TEST_MODEL': 'model/{:s}/final'.format(net_name)
+    }
+    train_cfg = {
+        'MODEL_SAVE_DIR': 'model/xception_ilsvrc_2012/',
+        'TBOARD_SAVE_DIR': 'tboard/xception_ilsvrc_2012/',
+        'MODEL_PARAMS_CONFIG_FILE_NAME': "model_train_config.json",
+        'RESTORE_FROM_SNAPSHOT': {
+            'ENABLE': False,
+            'SNAPSHOT_PATH': ''
+        },
+        'SNAPSHOT_EPOCH': 4,
+        'BATCH_SIZE': 32,
+        'EPOCH_NUMS': 129,
+        'WARM_UP': {
+            'ENABLE': True,
+            'EPOCH_NUMS': 4
+        },
+        'FREEZE_BN': {
+            'ENABLE': False
+        },
+        'FAST_DATA_PROVIDER': {
+            'ENABLE': True,
+            'MULTI_PROCESSOR_NUMS': 6,
+            'SHUFFLE_BUFFER_SIZE': 512,
+            'PREFETCH_SIZE': 16
+        },
+        'DROPOUT': {
+            'ENABLE': False,
+            'KEEP_PROB': 0.3
+        },
+        'LABEL_SMOOTH': {
+            'ENABLE': False,
+            'SMOOTH_VALUE': 0.1
+        }
+    }
+    solver_cfg = {
+        'LR': 0.0125,
+        'LR_POLICY': 'cos',
+        'POLY_DECAY': {
+            'LR_POLYNOMIAL_POWER': 0.95,
+            'LR_POLYNOMIAL_END_LR': 0.000001
+        },
+        'EXP_DECAY': {
+            'DECAY_RATE': 0.1,
+            'APPLY_STAIRCASE': True
+        },
+        'COS_DECAY': {
+            'ALPHA': 0.0
+        },
+        'PIECEWISE_DECAY': {
+            'DECAY_RATE': 0.1,
+            'DECAY_BOUNDARY': [30.0, 60.0, 90.0, 120.0]
+        },
+        'OPTIMIZER': 'sgd',
+        'MOMENTUM': 0.9,
+        'WEIGHT_DECAY': 0.0005,
+        'MOVING_AVE_DECAY': 0.9995,
+        'LOSS_TYPE': 'cross_entropy',
+    }
+    gpu_cfg = {
+        'GPU_MEMORY_FRACTION': 0.9,
+        'TF_ALLOW_GROWTH': True
+    }
+    log_cfg = {
+        'SAVE_DIR': './log',
+        'LEVEL': 'INFO'
+    }
 
 
 
