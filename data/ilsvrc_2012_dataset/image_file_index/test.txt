@@ -1,9 +1,0 @@
-./data/ilsvrc_2012_dataset/source_image/test/0/ILSVRC2012_val_00000025.JPEG 0
-./data/ilsvrc_2012_dataset/source_image/test/1/ILSVRC2012_val_00000127.JPEG 1
-./data/ilsvrc_2012_dataset/source_image/test/0/ILSVRC2012_val_00000026.JPEG 0
-./data/ilsvrc_2012_dataset/source_image/test/1/ILSVRC2012_val_00000129.JPEG 1
-./data/ilsvrc_2012_dataset/source_image/test/2/ILSVRC2012_val_00000250.JPEG 2
-./data/ilsvrc_2012_dataset/source_image/test/2/ILSVRC2012_val_00000249.JPEG 2
-./data/ilsvrc_2012_dataset/source_image/test/1/ILSVRC2012_val_00000130.JPEG 1
-./data/ilsvrc_2012_dataset/source_image/test/2/ILSVRC2012_val_00000248.JPEG 2
-./data/ilsvrc_2012_dataset/source_image/test/0/ILSVRC2012_val_00000027.JPEG 0
