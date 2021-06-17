@@ -11,12 +11,10 @@ prepare classification task
 import argparse
 import os
 import os.path as ops
-import codecs
 import yaml
 import collections
 import json
 import glob
-from ast import literal_eval
 
 import loguru
 import tqdm
@@ -97,7 +95,7 @@ def _generate_class_id_map_file(task_dir):
     with open(ops.join(task_dir, 'class_id_map.json'), 'w') as file:
         json.dump(cls_map, file)
 
-    return cls_map
+    return True
 
 
 def _make_image_index_file(task_dir):
@@ -110,7 +108,7 @@ def _make_image_index_file(task_dir):
         LOG.error('Task dir: {:s} not exist'.format(task_dir))
         return False
 
-    image_index_file_dir = ops.join(task_dir, 'image_index_file')
+    image_index_file_dir = ops.join(task_dir, 'image_file_index')
     os.makedirs(image_index_file_dir, exist_ok=True)
 
     cls_id_map_file = ops.join(task_dir, 'class_id_map.json')
@@ -119,9 +117,9 @@ def _make_image_index_file(task_dir):
 
     # generate train index file
     train_src_image_dir = ops.join(task_dir, 'src_image', 'train')
-    train_src_image_paths = glob.glob('{:s}/*'.format(train_src_image_dir))
+    train_src_image_paths = glob.glob('{:s}/**/*'.format(train_src_image_dir), recursive=True)
     train_src_image_paths = filter(
-        lambda x: ops.split(x)[1].endswith(('jpg', 'png', 'jpeg', 'JPEG', 'tif', 'tiff')),
+        lambda x: ops.split(x)[1].lower().endswith(('jpg', 'png', 'jpeg', 'tif', 'tiff')),
         train_src_image_paths
     )
     train_image_file_index_info = []
@@ -137,9 +135,9 @@ def _make_image_index_file(task_dir):
 
     # generate test index file
     test_src_image_dir = ops.join(task_dir, 'src_image', 'test')
-    test_src_image_paths = glob.glob('{:s}/*'.format(test_src_image_dir))
+    test_src_image_paths = glob.glob('{:s}/**/*'.format(test_src_image_dir), recursive=True)
     test_src_image_paths = filter(
-        lambda x: ops.split(x)[1].endswith(('jpg', 'png', 'jpeg', 'JPEG', 'tif', 'tiff')),
+        lambda x: ops.split(x)[1].lower().endswith(('jpg', 'png', 'jpeg', 'tif', 'tiff')),
         test_src_image_paths
     )
     test_image_file_index_info = []
@@ -155,9 +153,9 @@ def _make_image_index_file(task_dir):
 
     # generate val index file
     val_src_image_dir = ops.join(task_dir, 'src_image', 'val')
-    val_src_image_paths = glob.glob('{:s}/*'.format(val_src_image_dir))
+    val_src_image_paths = glob.glob('{:s}/**/*'.format(val_src_image_dir), recursive=True)
     val_src_image_paths = filter(
-        lambda x: ops.split(x)[1].endswith(('jpg', 'png', 'jpeg', 'JPEG', 'tif', 'tiff')),
+        lambda x: ops.split(x)[1].lower().endswith(('jpg', 'png', 'jpeg', 'tif', 'tiff')),
         val_src_image_paths
     )
     val_image_file_index_info = []
@@ -278,9 +276,7 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
     else:
         raise NotImplementedError('Not support model: {:s}'.format(net_name))
     aug_cfg = {
-        'AUG': {
-            'RESIZE_METHOD': 'unpadding'
-        },
+        'RESIZE_METHOD': 'unpadding',
         'FIX_RESIZE_SIZE': [256, 256],
         'INF_RESIZE_VALUE': 500,
         'MAX_RESIZE_VALUE': 600,
@@ -305,13 +301,13 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
         }
     }
     dataset_cfg = {
-        'DATASET_NAME': 'ilsvrc_2012',
-        'DATA_DIR': './data/ilsvrc_2012_dataset',
+        'DATASET_NAME': '{:s}'.format(dataset_name),
+        'DATA_DIR': '{:s}'.format(task_dir),
         'IMAGE_TYPE': 'rgb',
         'NUM_CLASSES': 1000,
-        'TEST_FILE_LIST': './data/ilsvrc_2012_dataset/image_file_index/test.txt',
-        'TRAIN_FILE_LIST': './data/ilsvrc_2012_dataset/image_file_index/train.txt',
-        'VAL_FILE_LIST': './data/ilsvrc_2012_dataset/image_file_index/val.txt',
+        'TEST_FILE_LIST': '{:s}'.format(ops.join(task_dir, 'image_file_index', 'test.txt')),
+        'TRAIN_FILE_LIST': '{:s}'.format(ops.join(task_dir, 'image_file_index', 'train.txt')),
+        'VAL_FILE_LIST': '{:s}'.format(ops.join(task_dir, 'image_file_index', 'val.txt')),
         'IGNORE_INDEX': 255,
         'PADDING_VALUE': [0, 0, 0],
         'MEAN_VALUE': [123.68, 116.779, 103.939],
@@ -326,8 +322,8 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
         'TEST_MODEL': 'model/{:s}/final'.format(net_name)
     }
     train_cfg = {
-        'MODEL_SAVE_DIR': 'model/xception_ilsvrc_2012/',
-        'TBOARD_SAVE_DIR': 'tboard/xception_ilsvrc_2012/',
+        'MODEL_SAVE_DIR': 'model/{:s}_{:s}/'.format(net_name, dataset_name),
+        'TBOARD_SAVE_DIR': 'tboard/{:s}_{:s}/'.format(net_name, dataset_name),
         'MODEL_PARAMS_CONFIG_FILE_NAME': "model_train_config.json",
         'RESTORE_FROM_SNAPSHOT': {
             'ENABLE': False,
@@ -345,16 +341,16 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
         },
         'FAST_DATA_PROVIDER': {
             'ENABLE': True,
-            'MULTI_PROCESSOR_NUMS': 6,
+            'MULTI_PROCESSOR_NUMS': 8,
             'SHUFFLE_BUFFER_SIZE': 512,
             'PREFETCH_SIZE': 16
         },
         'DROPOUT': {
             'ENABLE': False,
-            'KEEP_PROB': 0.3
+            'KEEP_PROB': 0.7
         },
         'LABEL_SMOOTH': {
-            'ENABLE': False,
+            'ENABLE': True,
             'SMOOTH_VALUE': 0.1
         }
     }
@@ -391,5 +387,94 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
         'LEVEL': 'INFO'
     }
 
+    cfg = dict()
+    cfg['AUG'] = aug_cfg
+    cfg['DATASET'] = dataset_cfg
+    cfg['FREEZE'] = freeze_cfg
+    cfg['MODEL'] = model_cfg
+    cfg['TEST'] = test_cfg
+    cfg['TRAIN'] = train_cfg
+    cfg['SOLVER'] = solver_cfg
+    cfg['GPU'] = gpu_cfg
+    cfg['LOG'] = log_cfg
+
+    config_file_name = '{:s}_{:s}.yaml'.format(dataset_name, net_name)
+    config_file_path = ops.join('./config', config_file_name)
+    with open(config_file_path, 'w') as file:
+        yaml.dump(cfg, file)
+
+    LOG.info('Generate template model training config file complete')
+
+    return
 
 
+def _init_args():
+    """
+
+    :return:
+    """
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--task_dir', type=str, help='The source dataset dir')
+    parser.add_argument('--net', type=str, help='Model name used for training')
+    parser.add_argument('--dataset_name', type=str, help='The dataset name')
+
+    return parser.parse_args()
+
+
+def _prepare_classification_task(task_dir, net_name, dataset_name):
+    """
+
+    :param task_dir:
+    :param net_name:
+    :param dataset_name:
+    :return:
+    """
+    # check if source image dir complete
+    if not _check_src_image_dir_complete(task_dir=task_dir):
+        LOG.error('Prepare image classification task: {:s}, failed'.format(task_dir))
+        return
+
+    # generate class map id file
+    if not _generate_class_id_map_file(task_dir=task_dir):
+        LOG.error('Prepare image classification task: {:s}, failed'.format(task_dir))
+        return
+
+    # generate image index file
+    if not _make_image_index_file(task_dir=task_dir):
+        LOG.error('Prepare image classification task: {:s}, failed'.format(task_dir))
+        return
+
+    # generate template model training config file
+    _generate_template_model_cfg_file(
+        task_dir=task_dir,
+        net_name=net_name,
+        dataset_name=dataset_name
+    )
+
+    return
+
+
+def main():
+    """
+    main func
+    :return:
+    """
+    args = _init_args()
+
+    LOG.info('Start prepare image classification task')
+    _prepare_classification_task(
+        task_dir=args.task_dir,
+        net_name=args.net,
+        dataset_name=args.dataset_name
+    )
+    LOG.info('Complete prepare image classification task')
+
+    return
+
+
+if __name__ == '__main__':
+    """
+    main func
+    """
+    main()
