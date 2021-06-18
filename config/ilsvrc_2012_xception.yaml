@@ -60,6 +60,8 @@ TRAIN:
         EPOCH_NUMS: 4
     FREEZE_BN:
         ENABLE: False
+    USE_GENERAL_DATA_PROVIDER:
+        ENABLE: true
     FAST_DATA_PROVIDER:
         ENABLE: True
         MULTI_PROCESSOR_NUMS: 6

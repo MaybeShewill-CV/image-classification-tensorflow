@@ -47,21 +47,23 @@ TRAIN:
     TBOARD_SAVE_DIR: 'tboard/darknet53_ilsvrc_2012/'
     MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
-        ENABLE: False
-        SNAPSHOT_PATH: ''
+        ENABLE: True
+        SNAPSHOT_PATH: './model/darknet53_ilsvrc_2012/darknet53_val_acc=0.7948.ckpt-92'
     SNAPSHOT_EPOCH: 4
     BATCH_SIZE: 32
     EPOCH_NUMS: 129
     WARM_UP:
-        ENABLE: False
+        ENABLE: True
         EPOCH_NUMS: 5
     FREEZE_BN:
         ENABLE: False
+    USE_GENERAL_DATA_PROVIDER:
+        ENABLE: True
     FAST_DATA_PROVIDER:
         ENABLE: True
         MULTI_PROCESSOR_NUMS: 6
-        SHUFFLE_BUFFER_SIZE: 512
-        PREFETCH_SIZE: 16
+        SHUFFLE_BUFFER_SIZE: 256
+        PREFETCH_SIZE: 8
     DROPOUT:
         ENABLE: True
         KEEP_PROB: 0.8

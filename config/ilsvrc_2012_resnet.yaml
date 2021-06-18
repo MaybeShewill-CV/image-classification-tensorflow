@@ -41,38 +41,40 @@ FREEZE:
 MODEL:
     MODEL_NAME: 'resnet'
     RESNET:
-        NET_SIZE: 50
+        NET_SIZE: 18
 TEST:
     TEST_MODEL: 'model/resnet/final'
 TRAIN:
-    MODEL_SAVE_DIR: 'model/resnet50_ilsvrc_2012/'
-    TBOARD_SAVE_DIR: 'tboard/resnet50_ilsvrc_2012/'
+    MODEL_SAVE_DIR: 'model/resnet_ilsvrc_2012/'
+    TBOARD_SAVE_DIR: 'tboard/resnet_ilsvrc_2012/'
     MODEL_PARAMS_CONFIG_FILE_NAME: "model_train_config.json"
     RESTORE_FROM_SNAPSHOT:
         ENABLE: False
         SNAPSHOT_PATH: ''
     SNAPSHOT_EPOCH: 4
-    BATCH_SIZE: 32
-    EPOCH_NUMS: 193
+    BATCH_SIZE: 128
+    EPOCH_NUMS: 129
     WARM_UP:
-        ENABLE: False
+        ENABLE: True
         EPOCH_NUMS: 5
     FREEZE_BN:
         ENABLE: False
+    USE_GENERAL_DATA_PROVIDER:
+        ENABLE: true
     FAST_DATA_PROVIDER:
         ENABLE: True
         MULTI_PROCESSOR_NUMS: 6
-        SHUFFLE_BUFFER_SIZE: 512
-        PREFETCH_SIZE: 16
+        SHUFFLE_BUFFER_SIZE: 256
+        PREFETCH_SIZE: 8
     DROPOUT:
         ENABLE: False
-        KEEP_PROB: 0.3
+        KEEP_PROB: 0.75
     LABEL_SMOOTH:
-        ENABLE: False
+        ENABLE: True
         SMOOTH_VALUE: 0.1
 SOLVER:
-    LR: 0.01
-    LR_POLICY: 'piecewise'
+    LR: 0.05
+    LR_POLICY: 'cos'
     POLY_DECAY:
         LR_POLYNOMIAL_POWER: 0.95
         LR_POLYNOMIAL_END_LR: 0.000001
