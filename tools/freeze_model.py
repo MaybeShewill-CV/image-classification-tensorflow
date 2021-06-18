@@ -65,7 +65,7 @@ def freeze_model():
     # construct compute graph
     input_tensor = tf.placeholder(dtype=tf.float32, shape=[1, 224, 224, 3], name='input_tensor')
     logits = net.inference(input_tensor=input_tensor, name=cfg.MODEL.MODEL_NAME, reuse=False)
-    prob_score = tf.nn.softmax(logits, name='final_score')
+    prob_score = tf.nn.softmax(logits, name='output_tensor')
 
     # define moving average version of the learned variables for eval
     with tf.variable_scope(name_or_scope='moving_avg'):
@@ -92,7 +92,7 @@ def freeze_model():
         converted_graph_def = graph_util.convert_variables_to_constants(
             sess,
             input_graph_def=sess.graph.as_graph_def(),
-            output_node_names=["final_score"]
+            output_node_names=["output_tensor"]
         )
 
         with tf.gfile.GFile(args.pb_save_path, "wb") as f:
