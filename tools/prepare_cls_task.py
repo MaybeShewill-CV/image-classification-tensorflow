@@ -19,6 +19,8 @@ import glob
 import loguru
 import tqdm
 
+from tools import make_dataset_tfrecords
+
 LOG = loguru.logger
 LOG.add(
     './log/prepare_cls_task.log',
@@ -339,9 +341,12 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
         'FREEZE_BN': {
             'ENABLE': False
         },
+        'USE_GENERAL_DATA_PROVIDER': {
+            'ENABLE': True
+        },
         'FAST_DATA_PROVIDER': {
             'ENABLE': True,
-            'MULTI_PROCESSOR_NUMS': 8,
+            'MULTI_PROCESSOR_NUMS': 4,
             'SHUFFLE_BUFFER_SIZE': 512,
             'PREFETCH_SIZE': 16
         },
@@ -408,6 +413,20 @@ def _generate_template_model_cfg_file(task_dir, net_name, dataset_name):
     return
 
 
+def _args_str2bool(arg_value):
+    """
+    :param arg_value:
+    :return:
+    """
+    if arg_value.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+
+    elif arg_value.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Unsupported value encountered.')
+
+
 def _init_args():
     """
 
@@ -418,16 +437,18 @@ def _init_args():
     parser.add_argument('--task_dir', type=str, help='The source dataset dir')
     parser.add_argument('--net', type=str, help='Model name used for training')
     parser.add_argument('--dataset_name', type=str, help='The dataset name')
+    parser.add_argument('--make_tfrecords', type=_args_str2bool, default=True, help='Whether to make tfrecords')
 
     return parser.parse_args()
 
 
-def _prepare_classification_task(task_dir, net_name, dataset_name):
+def _prepare_classification_task(task_dir, net_name, dataset_name, make_tfrecords=True):
     """
 
     :param task_dir:
     :param net_name:
     :param dataset_name:
+    :param make_tfrecords:
     :return:
     """
     # check if source image dir complete
@@ -452,6 +473,9 @@ def _prepare_classification_task(task_dir, net_name, dataset_name):
         dataset_name=dataset_name
     )
 
+    if make_tfrecords:
+        os.system('python ./tools/make_dataset_tfrecords.py --net {:s} --dataset {:s}'.format(net_name, dataset_name))
+
     return
 
 
@@ -466,7 +490,8 @@ def main():
     _prepare_classification_task(
         task_dir=args.task_dir,
         net_name=args.net,
-        dataset_name=args.dataset_name
+        dataset_name=args.dataset_name,
+        make_tfrecords=args.make_tfrecords
     )
     LOG.info('Complete prepare image classification task')
 
