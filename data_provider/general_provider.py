@@ -3,10 +3,10 @@
 # @Time    : 2019/12/12 下午3:09
 # @Author  : MaybeShewill-CV
 # @Site    : https://github.com/MaybeShewill-CV/image-classification-tensorflow
-# @File    : ilsvrc_2012_provider.py
+# @File    : general_provider.py
 # @IDE: PyCharm
 """
-ilsvrc dataset reader
+general dataset reader
 """
 import os.path as ops
 
@@ -16,15 +16,15 @@ from data_provider import base_dataset_provider
 from local_utils import config_utils
 
 
-class IlsvrcDatasetProvider(base_dataset_provider.DataSetProvider):
+class GeneralDatasetProvider(base_dataset_provider.DataSetProvider):
     """
-    Ilsvrc dataset reader
+    General dataset reader
     """
     def __init__(self, cfg):
         """
 
         """
-        super(IlsvrcDatasetProvider, self).__init__(cfg=cfg)
+        super(GeneralDatasetProvider, self).__init__(cfg=cfg)
 
     def _load_train_val_image_index(self):
         """
@@ -57,7 +57,7 @@ def get_provider(cfg):
 
     :return:
     """
-    return IlsvrcDatasetProvider(cfg=cfg)
+    return GeneralDatasetProvider(cfg=cfg)
 
 
 def _test():
@@ -66,7 +66,7 @@ def _test():
     :return:
     """
     cfg = config_utils.get_config(config_file_path='./config/ilsvrc_2012_xception.yaml')
-    reader = IlsvrcDatasetProvider(cfg=cfg)
+    reader = GeneralDatasetProvider(cfg=cfg)
     if not reader.successfully_initialized:
         print('Dataset reader not successfully initialized')
         return

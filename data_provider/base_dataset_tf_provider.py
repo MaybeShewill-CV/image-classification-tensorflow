@@ -13,7 +13,6 @@ from abc import abstractmethod
 import os.path as ops
 
 import numpy as np
-import tqdm
 import loguru
 import tensorflow as tf
 
@@ -93,7 +92,6 @@ class DataSet(metaclass=ABCMeta):
 
         # decode gt image
         gt_image = tf.io.decode_raw(features['image_raw'], tf.uint8)
-        # gt_image = tf.image.decode_jpeg(gt_image, channels=3)
         gt_image = tf.reshape(
             gt_image,
             shape=[self._cfg.AUG.FIX_RESIZE_SIZE[1], self._cfg.AUG.FIX_RESIZE_SIZE[0], 3]

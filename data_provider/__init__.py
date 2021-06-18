@@ -21,10 +21,16 @@ def get_dataset_provider(cfg):
     dataset_name = cfg.DATASET.DATASET_NAME
     module_dir_name = ops.dirname(__file__)
     module_dir_name = ops.split(module_dir_name)[-1]
-    if cfg.TRAIN.FAST_DATA_PROVIDER.ENABLE:
-        module_name = '{:s}.{:s}_tf_provider'.format(module_dir_name, dataset_name)
+    if cfg.TRAIN.USE_GENERAL_DATA_PROVIDER.ENABLE:
+        if cfg.TRAIN.FAST_DATA_PROVIDER.ENABLE:
+            module_name = '{:s}.general_tf_provider'.format(module_dir_name)
+        else:
+            module_name = '{:s}.general_provider'.format(module_dir_name)
     else:
-        module_name = '{:s}.{:s}_provider'.format(module_dir_name, dataset_name)
+        if cfg.TRAIN.FAST_DATA_PROVIDER.ENABLE:
+            module_name = '{:s}.{:s}_tf_provider'.format(module_dir_name, dataset_name)
+        else:
+            module_name = '{:s}.{:s}_provider'.format(module_dir_name, dataset_name)
     mod = importlib.import_module(module_name)
 
     return getattr(mod, "get_provider")(cfg=cfg)

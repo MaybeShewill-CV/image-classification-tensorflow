@@ -6,7 +6,7 @@
 # @File    : ilsvrc_2012_tf_provider_v1.py
 # @IDE: PyCharm
 """
-ilsvrc dataset reader
+general tf dataset reader
 """
 import time
 import os.path as ops
