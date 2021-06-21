@@ -84,7 +84,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                 name='conv'
             )
             if need_bn:
-                result = self.layerbn(inputdata=result, is_training=self._is_training, name='bn', scale=False)
+                result = self.layerbn(inputdata=result, is_training=self._is_training, name='bn', scale=True)
             result = self.relu(inputdata=result, name='xception_conv_block_output')
 
             return result
@@ -193,7 +193,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                     k_size=3,
                     output_channels=128,
                     name='separate_conv_block_1',
-                    bn_scale=False
+                    bn_scale=True
                 )
                 result = self.relu(inputdata=result, name='relu_1')
                 result = self._xception_separate_conv_block(
@@ -226,7 +226,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                     k_size=3,
                     output_channels=256,
                     name='separate_conv_block_1',
-                    bn_scale=False
+                    bn_scale=True
                 )
                 result = self.relu(result, name='relu_2')
                 result = self._xception_separate_conv_block(
@@ -259,7 +259,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                     k_size=3,
                     output_channels=728,
                     name='separate_conv_block_1',
-                    bn_scale=False
+                    bn_scale=True
                 )
                 result = self.relu(result, name='relu_2')
                 result = self._xception_separate_conv_block(
@@ -301,7 +301,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                         k_size=3,
                         output_channels=728,
                         name='separate_conv_block_1',
-                        bn_scale=False
+                        bn_scale=True
                     )
                     result = self.relu(inputdata=result, name='relu_2')
                     result = self._xception_separate_conv_block(
@@ -309,7 +309,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                         k_size=3,
                         output_channels=728,
                         name='separate_conv_block_2',
-                        bn_scale=False
+                        bn_scale=True
                     )
                     result = self.relu(inputdata=result, name='relu_3')
                     result = self._xception_separate_conv_block(
@@ -339,7 +339,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                     k_size=3,
                     output_channels=728,
                     name='separate_conv_block_1',
-                    bn_scale=False
+                    bn_scale=True
                 )
                 result = self.relu(inputdata=result, name='relu_2')
                 result = self._xception_separate_conv_block(
@@ -370,7 +370,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                     k_size=3,
                     output_channels=1536,
                     name='separate_conv_block_1',
-                    bn_scale=False
+                    bn_scale=True
                 )
                 result = self.relu(inputdata=result, name='relu_1')
                 result = self._xception_separate_conv_block(
@@ -378,7 +378,7 @@ class Xception(cnn_basenet.CNNBaseModel):
                     k_size=3,
                     output_channels=2048,
                     name='separate_conv_block_2',
-                    bn_scale=False
+                    bn_scale=True
                 )
                 result = self.relu(inputdata=result, name='relu_2')
                 self._feature_maps['downsample_32'] = tf.identity(result)
