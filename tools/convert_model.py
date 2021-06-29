@@ -14,6 +14,7 @@ import argparse
 import tensorflow as tf
 from tensorflow.python.framework import graph_util
 from tensorflow import saved_model as sm
+import tf2onnx
 
 import cls_model_zoo
 from local_utils import config_utils
@@ -45,8 +46,9 @@ def _build_model_graph_session(model_cfg):
     sess_config.gpu_options.allocator_type = 'BFC'
 
     sess = tf.Session(config=sess_config)
+    gd = graph_util.remove_training_nodes(sess.graph_def)
 
-    return sess
+    return sess, gd
 
 
 def _convert_ckpt_to_frozen_pb(net_name, dataset_name, ckpt_file_path, frozen_pb_save_path):
@@ -63,7 +65,7 @@ def _convert_ckpt_to_frozen_pb(net_name, dataset_name, ckpt_file_path, frozen_pb
     if not ops.exists(config_file_path):
         raise ValueError('Config file path: {:s} not exist'.format(config_file_path))
     cfg = config_utils.get_config(config_file_path=config_file_path)
-    sess = _build_model_graph_session(model_cfg=cfg)
+    sess, gd = _build_model_graph_session(model_cfg=cfg)
 
     # define moving average version of the learned variables for eval
     with tf.variable_scope(name_or_scope='moving_avg'):
@@ -79,17 +81,16 @@ def _convert_ckpt_to_frozen_pb(net_name, dataset_name, ckpt_file_path, frozen_pb
         # generate protobuf
         converted_graph_def = graph_util.convert_variables_to_constants(
             sess,
-            input_graph_def=sess.graph.as_graph_def(),
+            input_graph_def=gd,
             output_node_names=["output_tensor"]
         )
-
-        with tf.gfile.GFile(frozen_pb_save_path, "wb") as f:
-            f.write(converted_graph_def.SerializeToString())
+        tf.train.write_graph(converted_graph_def, './', frozen_pb_save_path, as_text=False)
 
     print('Convert ckpt weights to frozen pb completed!!!')
+    return
 
 
-def _convert_ckpt_2_tf_saved_model(net_name, dataset_name, ckpt_fle_path, saved_model_export_dir):
+def _convert_ckpt_to_tf_saved_model(net_name, dataset_name, ckpt_fle_path, saved_model_export_dir):
     """
 
     :param net_name:
@@ -103,7 +104,7 @@ def _convert_ckpt_2_tf_saved_model(net_name, dataset_name, ckpt_fle_path, saved_
     if not ops.exists(config_file_path):
         raise ValueError('Config file path: {:s} not exist'.format(config_file_path))
     cfg = config_utils.get_config(config_file_path=config_file_path)
-    sess = _build_model_graph_session(model_cfg=cfg)
+    sess, gd = _build_model_graph_session(model_cfg=cfg)
 
     # define moving average version of the learned variables for eval
     with tf.variable_scope(name_or_scope='moving_avg'):
@@ -141,4 +142,61 @@ def _convert_ckpt_2_tf_saved_model(net_name, dataset_name, ckpt_fle_path, saved_
         # save model
         saved_builder.save()
 
+    print('Convert ckpt weights to tf saved model completed!!!')
     return
+
+
+def _convert_ckpt_to_onnx(net_name, dataset_name, ckpt_file_path, onnx_save_path):
+    """
+
+    :param net_name:
+    :param dataset_name:
+    :param ckpt_file_path:
+    :param onnx_save_path:
+    :return:
+    """
+    config_file_name = '{:s}_{:s}.yaml'.format(dataset_name, net_name)
+    config_file_path = ops.join('./config', config_file_name)
+    if not ops.exists(config_file_path):
+        raise ValueError('Config file path: {:s} not exist'.format(config_file_path))
+    cfg = config_utils.get_config(config_file_path=config_file_path)
+    sess, gd = _build_model_graph_session(model_cfg=cfg)
+
+    with tf.variable_scope(name_or_scope='moving_avg'):
+        variable_averages = tf.train.ExponentialMovingAverage(
+            cfg.SOLVER.MOVING_AVE_DECAY)
+        variables_to_restore = variable_averages.variables_to_restore()
+    saver = tf.train.Saver(variables_to_restore)
+
+    with sess.as_default():
+        saver.restore(sess=sess, save_path=ckpt_file_path)
+        onnx_graph = tf2onnx.tfonnx.process_tf_graph(
+            gd,
+            input_names=["input_tensor:0"],
+            output_names=["output_tensor:0"]
+        )
+        model_proto = onnx_graph.make_model('{:s}_{:s}_onnx_model'.format(dataset_name, net_name))
+        with open(onnx_save_path, "wb") as f:
+            f.write(model_proto.SerializeToString())
+
+    print('Convert ckpt weights to onnx completed!!!')
+    return
+
+
+if __name__ == '__main__':
+    """
+    
+    """
+    # _convert_ckpt_to_onnx(
+    #     net_name='mobilenetv2',
+    #     dataset_name='ilsvrc_2012',
+    #     ckpt_file_path='./model_weights/tf_checkpoint/mobilenetv2.ckpt-128',
+    #     onnx_save_path='./model_weights/onnx/mobilenetv2.onnx'
+    # )
+
+    _convert_ckpt_to_frozen_pb(
+        net_name='mobilenetv2',
+        dataset_name='ilsvrc_2012',
+        ckpt_file_path='./model_weights/tf_checkpoint/mobilenetv2.ckpt-128',
+        frozen_pb_save_path='./model_weights/onnx/mobilenetv2.pb'
+    )
