@@ -23,7 +23,6 @@ from sklearn.metrics import (precision_score, recall_score,
 from sklearn.metrics import classification_report
 from sklearn.preprocessing import label_binarize
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.utils.fixes import signature
 import matplotlib.pyplot as plt
 
 import cls_model_zoo
@@ -97,7 +96,7 @@ def plot_precision_recall_curve(labels, predictions_prob, class_nums, average_fu
     plt.figure()
     plt.step(recall[average_function], precision[average_function], color='b', alpha=0.2,
              where='post')
-    step_kwargs = ({'step': 'post'} if 'step' in signature(plt.fill_between).parameters else {})
+    step_kwargs = {'step': 'post'}
     plt.fill_between(recall[average_function], precision[average_function], alpha=0.2, color='b',
                      **step_kwargs)
 
